@@ -1,6 +1,7 @@
 import { beforeEach, expect, jest } from "@jest/globals";
 import {
   createProductController,
+  deleteProductController,
   updateProductController,
 } from "./productController";
 import productModel from "../models/productModel";
@@ -268,11 +269,55 @@ describe("Update Product Controller Test", () => {
     await updateProductController(req, res);
 
     expect(res.status).toHaveBeenCalledWith(500);
-    expect(res.send).toHaveBeenCalledWith(
-      expect.objectContaining({
-        success: false,
-        message: "Error in Update product",
-      })
-    );
+    expect(res.send).toHaveBeenCalledWith({
+      success: false,
+      message: "Error in Update product",
+      error: expect.any(Object),
+    });
+  });
+});
+
+describe("Delete Product Controller Test", () => {
+  let req, res;
+
+  beforeEach(() => {
+    req = {
+      params: { pid: 1 },
+    };
+    res = {
+      status: jest.fn().mockReturnThis(),
+      send: jest.fn(),
+    };
+  });
+
+  test("should delete product", async () => {
+    productModel.findByIdAndDelete.mockReturnValue({
+      select: jest.fn(),
+    });
+
+    await deleteProductController(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.send).toHaveBeenCalledWith({
+      success: true,
+      message: "Product Deleted successfully",
+    });
+  });
+
+  test("returns error message when unexpected error occurs", async () => {
+    productModel.findByIdAndDelete.mockImplementation(() => {
+      throw new Error();
+    });
+    const consoleSpy = jest.spyOn(console, "log").mockImplementation(jest.fn());
+
+    await deleteProductController(req, res);
+
+    expect(consoleSpy).toHaveBeenCalledTimes(1);
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.send).toHaveBeenCalledWith({
+      success: false,
+      message: "Error while deleting product",
+      error: expect.any(Object),
+    });
   });
 });

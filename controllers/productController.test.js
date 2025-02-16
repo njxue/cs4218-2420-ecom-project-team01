@@ -1,4 +1,4 @@
-import { expect, jest } from "@jest/globals";
+import { beforeEach, expect, jest } from "@jest/globals";
 import {
   createProductController,
   updateProductController,
@@ -13,14 +13,14 @@ jest.mock("braintree");
 jest.mock("slugify");
 
 describe("Create Product Controller Test", () => {
-  let req, res, mockProduct;
+  let req, res, mockProductInstance;
 
   beforeEach(() => {
     jest.clearAllMocks();
 
     slugify.mockImplementation((str) => str);
 
-    mockProduct = {
+    mockProductInstance = {
       name: "Cool product",
       description: "This is a cool product",
       price: 100,
@@ -31,9 +31,11 @@ describe("Create Product Controller Test", () => {
         data: "fakeData",
         contentType: "image/jpeg",
       },
+      save: jest.fn(),
     };
 
-    const { name, description, price, category, quantity, photo } = mockProduct;
+    const { name, description, price, category, quantity, photo } =
+      mockProductInstance;
 
     req = {
       fields: {
@@ -58,23 +60,49 @@ describe("Create Product Controller Test", () => {
     };
   });
 
-  test("successfully saves product when all fields are valid", async () => {
-    fs.readFileSync = jest.fn();
-    const mockProductInstance = { ...mockProduct, save: jest.fn() };
-    productModel.mockReturnValue(mockProductInstance);
+  describe("should create and save product", () => {
+    let assertProductSaved;
 
-    await createProductController(req, res);
+    beforeEach(() => {
+      jest.clearAllMocks();
+      fs.readFileSync = jest.fn();
+      productModel.mockReturnValue(mockProductInstance);
 
-    expect(productModel).toHaveBeenCalledWith({
-      ...req.fields,
-      slug: slugify(req.fields.name),
+      assertProductSaved = () => {
+        expect(productModel).toHaveBeenCalledWith({
+          ...req.fields,
+          slug: slugify(req.fields.name),
+        });
+        expect(mockProductInstance.save).toHaveBeenCalledTimes(1);
+        expect(res.status).toHaveBeenCalledWith(201);
+        expect(res.send).toHaveBeenCalledWith({
+          success: true,
+          message: "Product Created Successfully",
+          products: mockProductInstance,
+        });
+      };
     });
-    expect(mockProductInstance.save).toHaveBeenCalledTimes(1);
-    expect(res.status).toHaveBeenCalledWith(201);
-    expect(res.send).toHaveBeenCalledWith({
-      success: true,
-      message: "Product Created Successfully",
-      products: mockProductInstance,
+
+    test("when all fields are present and valid", async () => {
+      await createProductController(req, res);
+
+      assertProductSaved();
+    });
+
+    test("when photo is missing", async () => {
+      req.files.photo = null;
+
+      await createProductController(req, res);
+
+      assertProductSaved();
+    });
+
+    test("when shipping is missing", async () => {
+      req.fields.shipping = null;
+
+      await createProductController(req, res);
+
+      assertProductSaved();
     });
   });
 
@@ -135,15 +163,16 @@ describe("Create Product Controller Test", () => {
   });
 });
 
-describe("Create Product Controller Test", () => {
-  let req, res, mockProduct;
+// =============== Update Product Controller ===============
+describe("Update Product Controller Test", () => {
+  let req, res, mockProductInstance;
 
   beforeEach(() => {
     jest.clearAllMocks();
 
     slugify.mockImplementation((str) => str);
 
-    mockProduct = {
+    mockProductInstance = {
       name: "Updated Cool product",
       description: "This is an updated cool product",
       price: 100,
@@ -154,9 +183,11 @@ describe("Create Product Controller Test", () => {
         data: "fakeData",
         contentType: "image/jpeg",
       },
+      save: jest.fn(),
     };
 
-    const { name, description, price, category, quantity, photo } = mockProduct;
+    const { name, description, price, category, quantity, shipping, photo } =
+      mockProductInstance;
 
     req = {
       fields: {
@@ -165,6 +196,7 @@ describe("Create Product Controller Test", () => {
         price,
         category,
         quantity,
+        shipping,
       },
       files: {
         photo: {
@@ -182,26 +214,52 @@ describe("Create Product Controller Test", () => {
     };
   });
 
-  test("successfully updates and saves product when all fields are valid", async () => {
-    fs.readFileSync = jest.fn();
-    const mockProductInstance = { ...mockProduct, save: jest.fn() };
-    productModel.findByIdAndUpdate = jest
-      .fn()
-      .mockResolvedValue(mockProductInstance);
+  describe("should update and save product", () => {
+    let assertProductSaved;
 
-    await updateProductController(req, res);
+    beforeEach(() => {
+      jest.clearAllMocks();
+      fs.readFileSync = jest.fn();
+      productModel.findByIdAndUpdate = jest
+        .fn()
+        .mockResolvedValue(mockProductInstance);
 
-    expect(productModel.findByIdAndUpdate).toHaveBeenCalledWith(
-      req.params.pid,
-      { ...req.fields, slug: slugify(req.fields.name) },
-      { new: true }
-    );
-    expect(mockProductInstance.save).toHaveBeenCalledTimes(1);
-    expect(res.status).toHaveBeenCalledWith(201);
-    expect(res.send).toHaveBeenCalledWith({
-      success: true,
-      message: "Product Updated Successfully",
-      products: mockProductInstance,
+      assertProductSaved = () => {
+        expect(productModel.findByIdAndUpdate).toHaveBeenCalledWith(
+          req.params.pid,
+          { ...req.fields, slug: slugify(req.fields.name) },
+          { new: true }
+        );
+        expect(mockProductInstance.save).toHaveBeenCalledTimes(1);
+        expect(res.status).toHaveBeenCalledWith(201);
+        expect(res.send).toHaveBeenCalledWith({
+          success: true,
+          message: "Product Updated Successfully",
+          products: mockProductInstance,
+        });
+      };
+    });
+
+    test("when all fields are present and valid", async () => {
+      await updateProductController(req, res);
+
+      assertProductSaved();
+    });
+
+    test("when photo is missing", async () => {
+      req.files.photo = null;
+
+      await updateProductController(req, res);
+
+      assertProductSaved();
+    });
+
+    test("when shipping is missing", async () => {
+      req.fields.shipping = null;
+
+      await updateProductController(req, res);
+
+      assertProductSaved();
     });
   });
 
@@ -260,4 +318,20 @@ describe("Create Product Controller Test", () => {
       error: "photo is Required and should be less then 1mb",
     });
   });
+
+  test("returns general error message when product does not exists", async () => {
+    productModel.findByIdAndUpdate = jest.fn().mockResolvedValue(null);
+
+    await updateProductController(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.send).toHaveBeenCalledWith(
+      expect.objectContaining({
+        success: false,
+        message: "Error in Update product",
+      })
+    );
+  });
 });
+
+describe("Delete Product Controller Test", () => {});

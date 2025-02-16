@@ -106,50 +106,23 @@ describe("Create Product Controller Test", () => {
     });
   });
 
-  test("returns correct error message when product name is not provided", async () => {
-    req.fields.name = null;
+  test.each([
+    ["name", "Name is Required"],
+    ["description", "Description is Required"],
+    ["price", "Price is Required"],
+    ["category", "Category is Required"],
+    ["quantity", "Quantity is Required"],
+  ])(
+    "returns correct error message when %s is missing",
+    async (field, expectedMessage) => {
+      req.fields[field] = null;
 
-    await createProductController(req, res);
+      await createProductController(req, res);
 
-    expect(res.status).toHaveBeenCalledWith(500);
-    expect(res.send).toHaveBeenCalledWith({ error: "Name is Required" });
-  });
-
-  test("returns correct error message when product description is not provided", async () => {
-    req.fields.description = null;
-
-    await createProductController(req, res);
-
-    expect(res.status).toHaveBeenCalledWith(500);
-    expect(res.send).toHaveBeenCalledWith({ error: "Description is Required" });
-  });
-
-  test("returns correct error message when product price is not provided", async () => {
-    req.fields.price = null;
-
-    await createProductController(req, res);
-
-    expect(res.status).toHaveBeenCalledWith(500);
-    expect(res.send).toHaveBeenCalledWith({ error: "Price is Required" });
-  });
-
-  test("returns correct error message when product category is not provided", async () => {
-    req.fields.category = null;
-
-    await createProductController(req, res);
-
-    expect(res.status).toHaveBeenCalledWith(500);
-    expect(res.send).toHaveBeenCalledWith({ error: "Category is Required" });
-  });
-
-  test("returns correct error message when product quantity is not provided", async () => {
-    req.fields.quantity = null;
-
-    await createProductController(req, res);
-
-    expect(res.status).toHaveBeenCalledWith(500);
-    expect(res.send).toHaveBeenCalledWith({ error: "Quantity is Required" });
-  });
+      expect(res.status).toHaveBeenCalledWith(500);
+      expect(res.send).toHaveBeenCalledWith({ error: expectedMessage });
+    }
+  );
 
   test("returns correct error message when photo is more than 1mb in size", async () => {
     req.files.photo.size = 1000001;
@@ -205,7 +178,7 @@ describe("Update Product Controller Test", () => {
           type: photo.type,
         },
       },
-      params: { id: 1 },
+      params: { pid: 1 },
     };
 
     res = {
@@ -263,49 +236,19 @@ describe("Update Product Controller Test", () => {
     });
   });
 
-  test("returns correct error message when product name is not provided", async () => {
-    req.fields.name = null;
+  test.each([
+    ["name", "Name is Required"],
+    ["description", "Description is Required"],
+    ["price", "Price is Required"],
+    ["category", "Category is Required"],
+    ["quantity", "Quantity is Required"],
+  ])("when %s is missing", async (field, expectedMessage) => {
+    req.fields[field] = null;
 
     await updateProductController(req, res);
 
     expect(res.status).toHaveBeenCalledWith(500);
-    expect(res.send).toHaveBeenCalledWith({ error: "Name is Required" });
-  });
-
-  test("returns correct error message when product description is not provided", async () => {
-    req.fields.description = null;
-
-    await updateProductController(req, res);
-
-    expect(res.status).toHaveBeenCalledWith(500);
-    expect(res.send).toHaveBeenCalledWith({ error: "Description is Required" });
-  });
-
-  test("returns correct error message when product price is not provided", async () => {
-    req.fields.price = null;
-
-    await updateProductController(req, res);
-
-    expect(res.status).toHaveBeenCalledWith(500);
-    expect(res.send).toHaveBeenCalledWith({ error: "Price is Required" });
-  });
-
-  test("returns correct error message when product category is not provided", async () => {
-    req.fields.category = null;
-
-    await updateProductController(req, res);
-
-    expect(res.status).toHaveBeenCalledWith(500);
-    expect(res.send).toHaveBeenCalledWith({ error: "Category is Required" });
-  });
-
-  test("returns correct error message when product quantity is not provided", async () => {
-    req.fields.quantity = null;
-
-    await updateProductController(req, res);
-
-    expect(res.status).toHaveBeenCalledWith(500);
-    expect(res.send).toHaveBeenCalledWith({ error: "Quantity is Required" });
+    expect(res.send).toHaveBeenCalledWith({ error: expectedMessage });
   });
 
   test("returns correct error message when photo is more than 1mb in size", async () => {
@@ -333,5 +276,3 @@ describe("Update Product Controller Test", () => {
     );
   });
 });
-
-describe("Delete Product Controller Test", () => {});

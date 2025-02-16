@@ -101,7 +101,7 @@ export const getSingleProductController = async (req, res) => {
     console.log(error);
     res.status(500).send({
       success: false,
-      message: "Eror while getitng single product",
+      message: "Error while getting single product",
       error,
     });
   }
@@ -172,10 +172,12 @@ export const updateProductController = async (req, res) => {
       { ...req.fields, slug: slugify(name) },
       { new: true }
     );
+
     if (photo) {
       products.photo.data = fs.readFileSync(photo.path);
       products.photo.contentType = photo.type;
     }
+
     await products.save();
     res.status(201).send({
       success: true,
@@ -187,7 +189,7 @@ export const updateProductController = async (req, res) => {
     res.status(500).send({
       success: false,
       error,
-      message: "Error in Updte product",
+      message: "Error in Update product",
     });
   }
 };

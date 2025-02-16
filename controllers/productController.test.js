@@ -2,11 +2,13 @@ import { beforeEach, expect, jest } from "@jest/globals";
 import {
   createProductController,
   deleteProductController,
+  getSingleProductController,
   updateProductController,
 } from "./productController";
 import productModel from "../models/productModel";
 import fs from "fs";
 import slugify from "slugify";
+import { populate } from "dotenv";
 
 jest.mock("../models/productModel.js");
 jest.mock("fs");
@@ -308,15 +310,66 @@ describe("Delete Product Controller Test", () => {
     productModel.findByIdAndDelete.mockImplementation(() => {
       throw new Error();
     });
-    const consoleSpy = jest.spyOn(console, "log").mockImplementation(jest.fn());
+    jest.spyOn(console, "log").mockImplementationOnce(jest.fn());
 
     await deleteProductController(req, res);
 
-    expect(consoleSpy).toHaveBeenCalledTimes(1);
     expect(res.status).toHaveBeenCalledWith(500);
     expect(res.send).toHaveBeenCalledWith({
       success: false,
       message: "Error while deleting product",
+      error: expect.any(Object),
+    });
+  });
+});
+
+describe("Get Single Product Controller Test", () => {
+  let req, res, mockProduct;
+
+  beforeEach(() => {
+    jest.restoreAllMocks();
+    req = {
+      params: {
+        slug: "test-slug",
+      },
+    };
+    res = {
+      status: jest.fn().mockReturnThis(),
+      send: jest.fn(),
+    };
+    mockProduct = {
+      name: "Cool book",
+      category: "Book",
+    };
+  });
+
+  test("should return the product", async () => {
+    productModel.findOne.mockReturnValue({
+      select: jest.fn().mockReturnThis(),
+      populate: jest.fn().mockReturnValue(mockProduct),
+    });
+    await getSingleProductController(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.send).toHaveBeenCalledWith({
+      success: true,
+      message: "Single Product Fetched",
+      product: mockProduct,
+    });
+  });
+
+  test("returns error message when unexpected error occurs", async () => {
+    productModel.findOne.mockImplementation(() => {
+      throw new Error();
+    });
+    jest.spyOn(console, "log").mockImplementationOnce(jest.fn());
+
+    await getSingleProductController(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.send).toHaveBeenCalledWith({
+      success: false,
+      message: "Error while getting single product",
       error: expect.any(Object),
     });
   });

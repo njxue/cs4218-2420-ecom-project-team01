@@ -2,6 +2,7 @@ import { beforeEach, expect, jest } from "@jest/globals";
 import {
   createProductController,
   deleteProductController,
+  getProductController,
   getSingleProductController,
   updateProductController,
 } from "./productController";
@@ -139,7 +140,7 @@ describe("Create Product Controller Test", () => {
   });
 });
 
-// =============== Update Product Controller ===============
+// ==================== Update Product Controller ====================
 describe("Update Product Controller Test", () => {
   let req, res, mockProductInstance;
 
@@ -279,6 +280,7 @@ describe("Update Product Controller Test", () => {
   });
 });
 
+// ==================== Delete Product Controller ====================
 describe("Delete Product Controller Test", () => {
   let req, res;
 
@@ -322,6 +324,8 @@ describe("Delete Product Controller Test", () => {
     });
   });
 });
+
+// ==================== Get Single Product Controller ====================
 
 describe("Get Single Product Controller Test", () => {
   let req, res, mockProduct;
@@ -371,6 +375,66 @@ describe("Get Single Product Controller Test", () => {
       success: false,
       message: "Error while getting single product",
       error: expect.any(Object),
+    });
+  });
+});
+
+// ==================== Get Product Controller ====================
+describe("Get Product Controller Test", () => {
+  let res, mockProducts;
+
+  beforeEach(() => {
+    jest.restoreAllMocks();
+
+    res = {
+      status: jest.fn().mockReturnThis(),
+      send: jest.fn(),
+    };
+    mockProducts = [
+      {
+        name: "Cool book",
+        category: "Book",
+      },
+      {
+        name: "Cool potato",
+        category: "Food",
+      },
+    ];
+  });
+
+  test("should return products", async () => {
+    productModel.find.mockReturnValue({
+      populate: jest.fn().mockReturnThis(),
+      select: jest.fn().mockReturnThis(),
+      limit: jest.fn().mockReturnThis(),
+      sort: jest.fn().mockReturnValue(mockProducts),
+    });
+
+    await getProductController({}, res);
+
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.send).toHaveBeenCalledWith({
+      success: true,
+      message: "All Products",
+      products: mockProducts,
+      counTotal: mockProducts.length,
+    });
+  });
+
+  test("returns error message when unexpected error occurs", async () => {
+    const error = new Error("Unexpected error");
+    productModel.find.mockImplementation(() => {
+      throw error;
+    });
+    jest.spyOn(console, "log").mockImplementationOnce(jest.fn());
+
+    await getProductController({}, res);
+
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.send).toHaveBeenCalledWith({
+      success: false,
+      message: "Error in getting products",
+      error: error.message,
     });
   });
 });

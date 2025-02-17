@@ -73,14 +73,14 @@ export const getProductController = async (req, res) => {
     res.status(200).send({
       success: true,
       counTotal: products.length,
-      message: "ALlProducts ",
+      message: "All Products",
       products,
     });
   } catch (error) {
     console.log(error);
     res.status(500).send({
       success: false,
-      message: "Erorr in getting products",
+      message: "Error in getting products",
       error: error.message,
     });
   }

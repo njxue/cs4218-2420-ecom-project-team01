@@ -4,12 +4,12 @@ import {
   deleteProductController,
   getProductController,
   getSingleProductController,
+  productListController,
   updateProductController,
 } from "./productController";
 import productModel from "../models/productModel";
 import fs from "fs";
 import slugify from "slugify";
-import { populate } from "dotenv";
 
 jest.mock("../models/productModel.js");
 jest.mock("fs");
@@ -301,6 +301,7 @@ describe("Delete Product Controller Test", () => {
 
     await deleteProductController(req, res);
 
+    expect(productModel.findByIdAndDelete).toHaveBeenCalledWith(req.params.pid);
     expect(res.status).toHaveBeenCalledWith(200);
     expect(res.send).toHaveBeenCalledWith({
       success: true,
@@ -331,7 +332,7 @@ describe("Get Single Product Controller Test", () => {
   let req, res, mockProduct;
 
   beforeEach(() => {
-    jest.restoreAllMocks();
+    jest.clearAllMocks();
     req = {
       params: {
         slug: "test-slug",
@@ -354,6 +355,9 @@ describe("Get Single Product Controller Test", () => {
     });
     await getSingleProductController(req, res);
 
+    expect(productModel.findOne).toHaveBeenCalledWith({
+      slug: req.params.slug,
+    });
     expect(res.status).toHaveBeenCalledWith(200);
     expect(res.send).toHaveBeenCalledWith({
       success: true,
@@ -384,7 +388,7 @@ describe("Get Product Controller Test", () => {
   let res, mockProducts;
 
   beforeEach(() => {
-    jest.restoreAllMocks();
+    jest.clearAllMocks();
 
     res = {
       status: jest.fn().mockReturnThis(),
@@ -412,6 +416,7 @@ describe("Get Product Controller Test", () => {
 
     await getProductController({}, res);
 
+    expect(productModel.find).toHaveBeenCalledWith({});
     expect(res.status).toHaveBeenCalledWith(200);
     expect(res.send).toHaveBeenCalledWith({
       success: true,
@@ -435,6 +440,99 @@ describe("Get Product Controller Test", () => {
       success: false,
       message: "Error in getting products",
       error: error.message,
+    });
+  });
+});
+
+// ==================== Product List Controller ====================
+describe("Product List Controller Test", () => {
+  let req, res;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    req = {
+      params: { page: 2 },
+    };
+    res = {
+      status: jest.fn().mockReturnThis(),
+      send: jest.fn(),
+    };
+  });
+
+  describe("should return products", () => {
+    let mockProducts;
+
+    beforeEach(() => {
+      mockProducts = [
+        {
+          name: "Cool book",
+          category: "Book",
+        },
+        {
+          name: "Cool potato",
+          category: "Food",
+        },
+      ];
+      productModel.find.mockReturnValue({
+        select: jest.fn().mockReturnThis(),
+        skip: jest.fn().mockReturnThis(),
+        limit: jest.fn().mockReturnThis(),
+        sort: jest.fn().mockReturnValue(mockProducts),
+      });
+    });
+
+    test("when page number is a positive number", async () => {
+      await productListController(req, res);
+
+      expect(productModel.find).toHaveBeenCalledWith({});
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.send).toHaveBeenCalledWith({
+        success: true,
+        products: mockProducts,
+      });
+    });
+
+    test("when page number is a non-positive number", async () => {
+      req.params.page = -1;
+
+      await productListController(req, res);
+
+      expect(productModel.find).toHaveBeenCalledWith({});
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.send).toHaveBeenCalledWith({
+        success: true,
+        products: mockProducts,
+      });
+    });
+
+    test("when page number is not provided", async () => {
+      req.params.page = undefined;
+
+      await productListController(req, res);
+
+      expect(productModel.find).toHaveBeenCalledWith({});
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.send).toHaveBeenCalledWith({
+        success: true,
+        products: mockProducts,
+      });
+    });
+  });
+
+  test("returns error message when database error occurs", async () => {
+    const error = new Error("Database error");
+    productModel.find.mockImplementation(() => {
+      throw error;
+    });
+    jest.spyOn(console, "log").mockImplementationOnce(jest.fn());
+
+    await productListController(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.send).toHaveBeenCalledWith({
+      success: false,
+      message: "error in per page ctrl",
+      error,
     });
   });
 });

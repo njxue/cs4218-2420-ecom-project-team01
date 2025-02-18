@@ -8,6 +8,7 @@ import {
   productFiltersController,
   productListController,
   productPhotoController,
+  searchProductController,
   updateProductController,
 } from "./productController";
 import productModel from "../models/productModel";
@@ -698,6 +699,7 @@ describe("Product Filters Controller Test", () => {
     productModel.find.mockImplementation(() => {
       throw error;
     });
+    jest.spyOn(console, "log").mockImplementationOnce(jest.fn());
 
     await productFiltersController(req, res);
 
@@ -750,6 +752,67 @@ describe("Product Count Controller Test", () => {
     expect(res.send).toHaveBeenCalledWith({
       message: "Error in product count",
       success: false,
+      error,
+    });
+  });
+});
+
+// ==================== Search Product Controller ====================
+describe("Search Product Controller Test", () => {
+  let req, res, mockProducts;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    req = {
+      params: { keyword: "potato" },
+    };
+    res = {
+      status: jest.fn().mockReturnThis(),
+      send: jest.fn(),
+      json: jest.fn(),
+    };
+    mockProducts = [
+      {
+        name: "Cool book",
+        description: "A cool book about potatos",
+      },
+      {
+        name: "Cool potato",
+        description: "A cool potato",
+      },
+    ];
+    productModel.find.mockReturnValue({
+      select: jest.fn().mockResolvedValue(mockProducts),
+    });
+  });
+
+  test("should return products when keyword is provided", async () => {
+    await searchProductController(req, res);
+
+    expect(res.json).toHaveBeenCalledWith(mockProducts);
+  });
+
+  test("should return products when keyword is not provided", async () => {
+    req.params.keyword = undefined;
+
+    await searchProductController(req, res);
+
+    expect(res.json).toHaveBeenCalledWith(mockProducts);
+  });
+
+  test("returns error message when database error occurs", async () => {
+    const error = new Error("Database error");
+    productModel.find.mockImplementation(() => {
+      throw error;
+    });
+    jest.spyOn(console, "log").mockImplementationOnce(jest.fn());
+
+    await searchProductController(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.send).toHaveBeenCalledWith({
+      success: false,
+      message: "Error In Search Product API",
       error,
     });
   });

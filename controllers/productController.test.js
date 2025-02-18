@@ -4,6 +4,7 @@ import {
   deleteProductController,
   getProductController,
   getSingleProductController,
+  productFiltersController,
   productListController,
   productPhotoController,
   updateProductController,
@@ -617,6 +618,92 @@ describe("Product Photo Controller Test", () => {
     expect(res.send).toHaveBeenCalledWith({
       success: false,
       message: "Error while getting photo",
+      error,
+    });
+  });
+});
+
+// ==================== Product Filters Controller ====================
+describe("Product Filters Controller Test", () => {
+  let req, res, mockProducts, args;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+
+    req = {
+      body: {
+        checked: ["Book", "Food"],
+        radio: [10, 20],
+      },
+    };
+    res = {
+      status: jest.fn().mockReturnThis(),
+      send: jest.fn(),
+    };
+  });
+
+  describe("should return products", () => {
+    beforeEach(() => {
+      mockProducts = [
+        {
+          name: "Cool book",
+          catgeory: "Book",
+          price: 10,
+        },
+        {
+          name: "Cool potato",
+          category: "Food",
+          price: 20,
+        },
+      ];
+      args = {
+        category: req.body.checked,
+        price: {
+          $gte: req.body.radio[0],
+          $lte: req.body.radio[1],
+        },
+      };
+      productModel.find.mockReturnValue(mockProducts);
+    });
+
+    test("when price and category filters are specified", async () => {
+      await productFiltersController(req, res);
+
+      expect(productModel.find).toHaveBeenCalledWith(args);
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.send).toHaveBeenCalledWith({
+        success: true,
+        products: mockProducts,
+      });
+    });
+
+    test("when price and category filters are not specified", async () => {
+      req.body.checked = undefined;
+      req.body.radio = undefined;
+
+      await productFiltersController(req, res);
+
+      expect(productModel.find).toHaveBeenCalledWith({});
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.send).toHaveBeenCalledWith({
+        success: true,
+        products: mockProducts,
+      });
+    });
+  });
+
+  test("returns error message when database error occurs", async () => {
+    const error = new Error("Database error");
+    productModel.find.mockImplementation(() => {
+      throw error;
+    });
+
+    await productFiltersController(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.send).toHaveBeenCalledWith({
+      success: false,
+      message: "Error while Filtering Products",
       error,
     });
   });

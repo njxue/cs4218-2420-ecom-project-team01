@@ -4,6 +4,7 @@ import {
   deleteProductController,
   getProductController,
   getSingleProductController,
+  productCategoryController,
   productCountController,
   productFiltersController,
   productListController,
@@ -13,10 +14,12 @@ import {
   updateProductController,
 } from "./productController";
 import productModel from "../models/productModel";
+import categoryModel from "../models/categoryModel";
 import fs from "fs";
 import slugify from "slugify";
 
 jest.mock("../models/productModel.js");
+jest.mock("../models/categoryModel.js");
 jest.mock("fs");
 jest.mock("braintree");
 jest.mock("slugify");
@@ -894,6 +897,74 @@ describe("Realted Product Controller Test", () => {
     expect(res.status).toHaveBeenCalledWith(500);
     expect(res.send).toHaveBeenCalledWith({
       message: "Error while geting related product",
+      success: false,
+      error,
+    });
+  });
+});
+
+// ==================== Product Category Controller ====================
+describe("Product Category Controller Test", () => {
+  let req, res, mockCategory, mockProducts;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    slugify.mockImplementation((str) => str);
+    req = {
+      params: { slug: "test-slug" },
+    };
+    res = {
+      status: jest.fn().mockReturnThis(),
+      send: jest.fn(),
+    };
+    mockCategory = "Food";
+    mockProducts = [
+      {
+        name: "Cool potato",
+        category: mockCategory,
+      },
+      {
+        name: "Cool tomato",
+        category: mockCategory,
+      },
+    ];
+    categoryModel.findOne.mockReturnValue(mockCategory);
+    productModel.find.mockReturnValue({
+      populate: jest.fn().mockReturnValue(mockProducts),
+    });
+  });
+
+  test("should return null category and empty list of products when slug is not provided", async () => {
+    req.params.slug = undefined;
+    categoryModel.findOne.mockReturnValue(null);
+    productModel.find.mockReturnValue({
+      populate: jest.fn().mockReturnValue([]),
+    });
+
+    await productCategoryController(req, res);
+
+    expect(categoryModel.findOne).toHaveBeenCalledWith({ slug: undefined });
+    expect(productModel.find).toHaveBeenCalledWith({ category: null });
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.send).toHaveBeenCalledWith({
+      success: true,
+      category: null,
+      products: [],
+    });
+  });
+
+  test("returns error message when database error occurs", async () => {
+    const error = new Error("Database error");
+    productModel.find.mockImplementation(() => {
+      throw error;
+    });
+    jest.spyOn(console, "log").mockImplementationOnce(jest.fn());
+
+    await productCategoryController(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.send).toHaveBeenCalledWith({
+      message: "Error While Getting products",
       success: false,
       error,
     });

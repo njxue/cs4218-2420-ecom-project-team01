@@ -4,6 +4,7 @@ import {
   deleteProductController,
   getProductController,
   getSingleProductController,
+  productCountController,
   productFiltersController,
   productListController,
   productPhotoController,
@@ -704,6 +705,51 @@ describe("Product Filters Controller Test", () => {
     expect(res.send).toHaveBeenCalledWith({
       success: false,
       message: "Error while Filtering Products",
+      error,
+    });
+  });
+});
+
+// ==================== Product Count Controller ====================
+describe("Product Count Controller Test", () => {
+  let res, mockTotal;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    res = {
+      status: jest.fn().mockReturnThis(),
+      send: jest.fn(),
+    };
+    mockTotal = 10;
+  });
+
+  test("should return product count", async () => {
+    const mockEstimatedDocumentCount = jest.fn().mockReturnValue(mockTotal);
+    productModel.find.mockReturnValue({
+      estimatedDocumentCount: mockEstimatedDocumentCount,
+    });
+
+    await productCountController({}, res);
+
+    expect(productModel.find).toHaveBeenCalledWith({});
+    expect(mockEstimatedDocumentCount).toHaveBeenCalledTimes(1);
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.send).toHaveBeenCalledWith({ success: true, total: mockTotal });
+  });
+
+  test("returns error message when database error occurs", async () => {
+    const error = new Error("Database error");
+    productModel.find.mockImplementation(() => {
+      throw error;
+    });
+    jest.spyOn(console, "log").mockImplementationOnce(jest.fn());
+
+    await productCountController({}, res);
+
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.send).toHaveBeenCalledWith({
+      message: "Error in product count",
+      success: false,
       error,
     });
   });

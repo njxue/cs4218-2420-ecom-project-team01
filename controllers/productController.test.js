@@ -146,6 +146,22 @@ describe("Create Product Controller Test", () => {
       error: "photo is Required and should be less then 1mb",
     });
   });
+  test("returns error message when database error occurs", async () => {
+    const error = new Error("Database error");
+    productModel.mockImplementation(() => {
+      throw error;
+    });
+    jest.spyOn(console, "log").mockImplementationOnce(jest.fn());
+
+    await createProductController(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.send).toHaveBeenCalledWith({
+      message: "Error in creating product",
+      success: false,
+      error,
+    });
+  });
 });
 
 // ==================== Update Product Controller ====================

@@ -8,6 +8,7 @@ import {
   productFiltersController,
   productListController,
   productPhotoController,
+  realtedProductController,
   searchProductController,
   updateProductController,
 } from "./productController";
@@ -813,6 +814,87 @@ describe("Search Product Controller Test", () => {
     expect(res.send).toHaveBeenCalledWith({
       success: false,
       message: "Error In Search Product API",
+      error,
+    });
+  });
+});
+
+// ==================== Realted Product Controller ====================
+describe("Realted Product Controller Test", () => {
+  let req, res, mockProducts;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    req = {
+      params: {
+        pid: 1,
+        cid: 2,
+      },
+    };
+    res = {
+      status: jest.fn().mockReturnThis(),
+      send: jest.fn(),
+    };
+    mockProducts = [
+      {
+        name: "Cool potato",
+        category: "Food",
+      },
+      {
+        name: "Cool tomato",
+        category: "Food",
+      },
+    ];
+    productModel.find.mockReturnValue({
+      select: jest.fn().mockReturnThis(),
+      limit: jest.fn().mockReturnThis(),
+      populate: jest.fn().mockReturnValue(mockProducts),
+    });
+  });
+
+  test("should return products when pid and cid are provided", async () => {
+    await realtedProductController(req, res);
+
+    expect(productModel.find).toHaveBeenCalledWith({
+      category: req.params.cid,
+      _id: { $ne: req.params.pid },
+    });
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.send).toHaveBeenCalledWith({
+      success: true,
+      products: mockProducts,
+    });
+  });
+
+  test("should return products when pid and cid are not provided", async () => {
+    req.params = {};
+
+    await realtedProductController(req, res);
+
+    expect(productModel.find).toHaveBeenCalledWith({
+      category: req.params.cid,
+      _id: { $ne: req.params.pid },
+    });
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.send).toHaveBeenCalledWith({
+      success: true,
+      products: mockProducts,
+    });
+  });
+
+  test("returns error message when database error occurs", async () => {
+    const error = new Error("Database error");
+    productModel.find.mockImplementation(() => {
+      throw error;
+    });
+    jest.spyOn(console, "log").mockImplementationOnce(jest.fn());
+
+    await realtedProductController(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.send).toHaveBeenCalledWith({
+      message: "Error while geting related product",
+      success: false,
       error,
     });
   });

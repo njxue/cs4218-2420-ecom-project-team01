@@ -317,9 +317,9 @@ export const realtedProductController = async (req, res) => {
     });
   } catch (error) {
     console.log(error);
-    res.status(400).send({
+    res.status(500).send({
       success: false,
-      message: "error while geting related product",
+      message: "Error while geting related product",
       error,
     });
   }
@@ -337,7 +337,7 @@ export const productCategoryController = async (req, res) => {
     });
   } catch (error) {
     console.log(error);
-    res.status(400).send({
+    res.status(500).send({
       success: false,
       error,
       message: "Error While Getting products",

@@ -977,8 +977,19 @@ describe("Product Category Controller Test", () => {
     });
   });
 
-  test("returns null category and empty list of products when slug is not provided", async () => {
-    req.params.slug = undefined;
+  test("returns category and products if they exist", async () => {
+    await productCategoryController(req, res);
+
+    expect(productModel.find).toHaveBeenCalledWith({ category: mockCategory });
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.send).toHaveBeenCalledWith({
+      success: true,
+      category: mockCategory,
+      products: mockProducts,
+    });
+  });
+
+  test("returns null category and empty list of products when category is not found", async () => {
     categoryModel.findOne.mockReturnValue(null);
     productModel.find.mockReturnValue({
       populate: jest.fn().mockReturnValue([]),
@@ -986,12 +997,27 @@ describe("Product Category Controller Test", () => {
 
     await productCategoryController(req, res);
 
-    expect(categoryModel.findOne).toHaveBeenCalledWith({ slug: undefined });
     expect(productModel.find).toHaveBeenCalledWith({ category: null });
     expect(res.status).toHaveBeenCalledWith(200);
     expect(res.send).toHaveBeenCalledWith({
       success: true,
       category: null,
+      products: [],
+    });
+  });
+
+  test("returns category and empty list of products when category found but no products are found", async () => {
+    productModel.find.mockReturnValue({
+      populate: jest.fn().mockReturnValue([]),
+    });
+
+    await productCategoryController(req, res);
+
+    expect(productModel.find).toHaveBeenCalledWith({ category: mockCategory });
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.send).toHaveBeenCalledWith({
+      success: true,
+      category: mockCategory,
       products: [],
     });
   });

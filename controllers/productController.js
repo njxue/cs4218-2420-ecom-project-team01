@@ -365,6 +365,15 @@ export const braintreeTokenController = async (req, res) => {
 export const brainTreePaymentController = async (req, res) => {
   try {
     const { nonce, cart } = req.body;
+    if (!nonce) {
+      return res.status(400).send("Nonce is empty");
+    }
+    if (!cart || cart.length === 0) {
+      return res.status(400).send("Cart is empty");
+    }
+    if (req.user?._id == null) {
+      return res.status(400).send("User id is empty");
+    }
     let total = 0;
     cart.map((i) => {
       total += i.price;

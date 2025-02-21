@@ -1,5 +1,7 @@
 import { beforeEach, expect, jest } from "@jest/globals";
 import {
+  brainTreePaymentController,
+  braintreeTokenController,
   createProductController,
   deleteProductController,
   getProductController,
@@ -15,13 +17,24 @@ import {
 } from "./productController";
 import productModel from "../models/productModel";
 import categoryModel from "../models/categoryModel";
+import orderModel from "../models/orderModel";
 import fs from "fs";
 import slugify from "slugify";
+import braintree from "braintree";
 
 jest.mock("../models/productModel.js");
 jest.mock("../models/categoryModel.js");
+jest.mock("../models/orderModel.js");
 jest.mock("fs");
-jest.mock("braintree");
+jest.mock("braintree", () => ({
+  BraintreeGateway: jest.fn().mockReturnValue({
+    clientToken: { generate: jest.fn() },
+    transaction: { sale: jest.fn() },
+  }),
+  Environment: {
+    Sandbox: "mockSandbox",
+  },
+}));
 jest.mock("slugify");
 
 describe("Create Product Controller Test", () => {
@@ -72,7 +85,7 @@ describe("Create Product Controller Test", () => {
     };
   });
 
-  describe("should create and save product", () => {
+  describe("creates and saves product", () => {
     let assertProductSaved;
 
     beforeEach(() => {
@@ -215,7 +228,7 @@ describe("Update Product Controller Test", () => {
     };
   });
 
-  describe("should update and save product", () => {
+  describe("updates and saves product", () => {
     let assertProductSaved;
 
     beforeEach(() => {
@@ -318,7 +331,7 @@ describe("Delete Product Controller Test", () => {
     };
   });
 
-  test("should delete product", async () => {
+  test("deletes product", async () => {
     productModel.findByIdAndDelete.mockReturnValue({
       select: jest.fn(),
     });
@@ -372,7 +385,7 @@ describe("Get Single Product Controller Test", () => {
     };
   });
 
-  test("should return the product", async () => {
+  test("returns the product", async () => {
     productModel.findOne.mockReturnValue({
       select: jest.fn().mockReturnThis(),
       populate: jest.fn().mockReturnValue(mockProduct),
@@ -430,7 +443,7 @@ describe("Get Product Controller Test", () => {
     ];
   });
 
-  test("should return products", async () => {
+  test("returns products", async () => {
     productModel.find.mockReturnValue({
       populate: jest.fn().mockReturnThis(),
       select: jest.fn().mockReturnThis(),
@@ -483,7 +496,7 @@ describe("Product List Controller Test", () => {
     };
   });
 
-  describe("should return products", () => {
+  describe("returns products", () => {
     let mockProducts;
 
     beforeEach(() => {
@@ -584,7 +597,7 @@ describe("Product Photo Controller Test", () => {
     };
   });
 
-  test("should return product photo if it exists", async () => {
+  test("returns product photo if it exists", async () => {
     productModel.findById.mockReturnValue({
       select: jest.fn().mockReturnValue(mockProduct),
     });
@@ -664,7 +677,7 @@ describe("Product Filters Controller Test", () => {
     };
   });
 
-  describe("should return products", () => {
+  describe("returns products", () => {
     beforeEach(() => {
       mockProducts = [
         {
@@ -745,7 +758,7 @@ describe("Product Count Controller Test", () => {
     mockTotal = 10;
   });
 
-  test("should return product count", async () => {
+  test("returns product count", async () => {
     const mockEstimatedDocumentCount = jest.fn().mockReturnValue(mockTotal);
     productModel.find.mockReturnValue({
       estimatedDocumentCount: mockEstimatedDocumentCount,
@@ -806,13 +819,13 @@ describe("Search Product Controller Test", () => {
     });
   });
 
-  test("should return products when keyword is provided", async () => {
+  test("returns products when keyword is provided", async () => {
     await searchProductController(req, res);
 
     expect(res.json).toHaveBeenCalledWith(mockProducts);
   });
 
-  test("should return products when keyword is not provided", async () => {
+  test("returns products when keyword is not provided", async () => {
     req.params.keyword = undefined;
 
     await searchProductController(req, res);
@@ -871,7 +884,7 @@ describe("Realted Product Controller Test", () => {
     });
   });
 
-  test("should return products when pid and cid are provided", async () => {
+  test("returns products when pid and cid are provided", async () => {
     await realtedProductController(req, res);
 
     expect(productModel.find).toHaveBeenCalledWith({
@@ -885,7 +898,7 @@ describe("Realted Product Controller Test", () => {
     });
   });
 
-  test("should return products when pid and cid are not provided", async () => {
+  test("returns products when pid and cid are not provided", async () => {
     req.params = {};
 
     await realtedProductController(req, res);
@@ -950,7 +963,7 @@ describe("Product Category Controller Test", () => {
     });
   });
 
-  test("should return null category and empty list of products when slug is not provided", async () => {
+  test("returns null category and empty list of products when slug is not provided", async () => {
     req.params.slug = undefined;
     categoryModel.findOne.mockReturnValue(null);
     productModel.find.mockReturnValue({
@@ -984,5 +997,162 @@ describe("Product Category Controller Test", () => {
       success: false,
       error,
     });
+  });
+});
+
+// ==================== Brain Tree Token Controller ====================
+describe("Brain Tree Token Controller Test", () => {
+  let gateway, res;
+
+  beforeEach(() => {
+    gateway = new braintree.BraintreeGateway();
+    res = {
+      status: jest.fn().mockReturnThis(),
+      send: jest.fn(),
+    };
+  });
+
+  test("returns token on success", async () => {
+    const mockRes = { success: true, clientToken: "token" };
+    gateway.clientToken.generate.mockImplementation((_, cb) => {
+      cb(null, mockRes);
+    });
+
+    await braintreeTokenController({}, res);
+
+    expect(gateway.clientToken.generate).toHaveBeenCalledWith(
+      {},
+      expect.any(Function)
+    );
+    expect(res.send).toHaveBeenCalledWith(mockRes);
+  });
+
+  test("returns error on client token generation failure", async () => {
+    const mockError = { message: "Braintree gateway error" };
+    gateway.clientToken.generate.mockImplementation((_, cb) => {
+      cb(mockError, null);
+    });
+
+    await braintreeTokenController({}, res);
+
+    expect(gateway.clientToken.generate).toHaveBeenCalledWith(
+      {},
+      expect.any(Function)
+    );
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.send).toHaveBeenCalledWith(mockError);
+  });
+
+  test("logs error on unexpected error", async () => {
+    const error = new Error("Unexpected error");
+    gateway.clientToken.generate.mockImplementation(() => {
+      throw error;
+    });
+    jest.spyOn(console, "log").mockImplementationOnce(jest.fn());
+
+    await braintreeTokenController({}, res);
+
+    expect(gateway.clientToken.generate).toHaveBeenCalledWith(
+      {},
+      expect.any(Function)
+    );
+    expect(console.log).toHaveBeenCalledWith(error);
+  });
+});
+
+// ==================== Brain Tree Payment Controller ====================
+describe("Brain Tree Payment Controller Test", () => {
+  let gateway, req, res;
+
+  beforeEach(() => {
+    gateway = new braintree.BraintreeGateway();
+    req = {
+      body: { nonce: "mockNonce", cart: [{ price: 100 }, { price: 200 }] },
+      user: { _id: 1 },
+    };
+    res = {
+      status: jest.fn().mockReturnThis(),
+      send: jest.fn(),
+      json: jest.fn(),
+    };
+  });
+
+  test("saves order when nonce, cart and user id are valid and provided", async () => {
+    const mockRes = { success: true };
+    gateway.transaction.sale.mockImplementation((_, cb) => {
+      cb(null, mockRes);
+    });
+    orderModel.prototype.save = jest.fn();
+
+    await brainTreePaymentController(req, res);
+
+    expect(gateway.transaction.sale).toHaveBeenCalledWith(
+      {
+        amount: 300,
+        paymentMethodNonce: req.body.nonce,
+        options: {
+          submitForSettlement: true,
+        },
+      },
+      expect.any(Function)
+    );
+    expect(orderModel).toHaveBeenCalledWith({
+      products: req.body.cart,
+      payment: mockRes,
+      buyer: req.user._id,
+    });
+    expect(orderModel.prototype.save).toHaveBeenCalledTimes(1);
+    expect(res.json).toHaveBeenCalledWith({ ok: true });
+  });
+
+  test("returns correct error when nonce is not provided", async () => {
+    req.body.nonce = undefined;
+
+    await brainTreePaymentController(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.send).toHaveBeenCalledWith("Nonce is empty");
+  });
+
+  test("returns correct error when cart is invalid", async () => {
+    req.body.cart = undefined;
+
+    await brainTreePaymentController(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.send).toHaveBeenCalledWith("Cart is empty");
+  });
+
+  test("returns correct error when user id is not provided", async () => {
+    req.user._id = undefined;
+
+    await brainTreePaymentController(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.send).toHaveBeenCalledWith("User id is empty");
+  });
+
+  test("returns error on transaction error", async () => {
+    const mockError = { message: "Transaction error" };
+    gateway.transaction.sale.mockImplementation((_, cb) => {
+      cb(mockError, null);
+    });
+
+    await brainTreePaymentController(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.send).toHaveBeenCalledWith(mockError);
+  });
+
+  test("logs error on unexpected error", async () => {
+    const error = new Error("Transaction error");
+    gateway.transaction.sale.mockImplementation(() => {
+      throw error;
+    });
+    jest.spyOn(console, "log").mockImplementationOnce(jest.fn());
+
+    await brainTreePaymentController(req, res);
+
+    expect(console.log).toHaveBeenCalledWith(error);
   });
 });

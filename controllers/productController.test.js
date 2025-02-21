@@ -303,19 +303,7 @@ describe("Update Product Controller Test", () => {
     });
   });
 
-  test("returns correct error message when product is not found", async () => {
-    productModel.findByIdAndUpdate = jest.fn().mockResolvedValue(null);
-
-    await updateProductController(req, res);
-
-    expect(res.status).toHaveBeenCalledWith(404);
-    expect(res.send).toHaveBeenCalledWith({
-      success: false,
-      message: "Product not found",
-    });
-  });
-
-  test.only("returns error message when database error occurs", async () => {
+  test("returns error message when database error occurs", async () => {
     const error = new Error("Database error");
     productModel.findByIdAndUpdate.mockImplementation(() => {
       throw error;
@@ -362,9 +350,10 @@ describe("Delete Product Controller Test", () => {
     });
   });
 
-  test("returns error message when unexpected error occurs", async () => {
+  test("returns error message when database error occurs", async () => {
+    const error = new Error("Database error");
     productModel.findByIdAndDelete.mockImplementation(() => {
-      throw new Error();
+      throw error;
     });
     jest.spyOn(console, "log").mockImplementationOnce(jest.fn());
 
@@ -374,7 +363,7 @@ describe("Delete Product Controller Test", () => {
     expect(res.send).toHaveBeenCalledWith({
       success: false,
       message: "Error while deleting product",
-      error: expect.any(Object),
+      error,
     });
   });
 });
@@ -419,9 +408,22 @@ describe("Get Single Product Controller Test", () => {
     });
   });
 
-  test("returns error message when unexpected error occurs", async () => {
+  test("returns error message when product is not found", async () => {
+    productModel.findOne.mockReturnValue(null);
+
+    await getSingleProductController(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(404);
+    expect(res.send).toHaveBeenCalledWith({
+      success: false,
+      message: "Product not found",
+    });
+  });
+
+  test("returns error message when database error occurs", async () => {
+    const error = new Error("Database error");
     productModel.findOne.mockImplementation(() => {
-      throw new Error();
+      throw error;
     });
     jest.spyOn(console, "log").mockImplementationOnce(jest.fn());
 
@@ -431,7 +433,7 @@ describe("Get Single Product Controller Test", () => {
     expect(res.send).toHaveBeenCalledWith({
       success: false,
       message: "Error while getting single product",
-      error: expect.any(Object),
+      error,
     });
   });
 });

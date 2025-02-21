@@ -90,8 +90,14 @@ export const getSingleProductController = async (req, res) => {
   try {
     const product = await productModel
       .findOne({ slug: req.params.slug })
-      .select("-photo")
-      .populate("category");
+      ?.select("-photo")
+      ?.populate("category");
+    if (!product) {
+      return res.status(404).send({
+        success: false,
+        message: "Product not found",
+      });
+    }
     res.status(200).send({
       success: true,
       message: "Single Product Fetched",
@@ -145,7 +151,7 @@ export const productPhotoController = async (req, res) => {
 //delete controller
 export const deleteProductController = async (req, res) => {
   try {
-    await productModel.findByIdAndDelete(req.params.pid).select("-photo");
+    await productModel.findByIdAndDelete(req.params.pid)?.select("-photo");
     res.status(200).send({
       success: true,
       message: "Product Deleted successfully",

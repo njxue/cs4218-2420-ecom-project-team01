@@ -452,7 +452,7 @@ describe("Get Single Product Controller Test", () => {
 
 // ==================== Get Product Controller ====================
 describe("Get Product Controller Test", () => {
-  let res, mockProducts;
+  let res, mockProducts, mockSort;
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -471,16 +471,16 @@ describe("Get Product Controller Test", () => {
         category: "Food",
       },
     ];
-  });
-
-  test("returns products", async () => {
+    mockSort = jest.fn().mockReturnValue(mockProducts);
     productModel.find.mockReturnValue({
       populate: jest.fn().mockReturnThis(),
       select: jest.fn().mockReturnThis(),
       limit: jest.fn().mockReturnThis(),
-      sort: jest.fn().mockReturnValue(mockProducts),
+      sort: mockSort,
     });
+  });
 
+  test("returns products if they exist", async () => {
     await getProductController({}, res);
 
     expect(productModel.find).toHaveBeenCalledWith({});
@@ -490,6 +490,21 @@ describe("Get Product Controller Test", () => {
       message: "All Products",
       products: mockProducts,
       counTotal: mockProducts.length,
+    });
+  });
+
+  test("returns empty list of products if no products exists", async () => {
+    mockSort.mockReturnValue([]);
+    
+    await getProductController({}, res);
+
+    expect(productModel.find).toHaveBeenCalledWith({});
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.send).toHaveBeenCalledWith({
+      success: true,
+      message: "All Products",
+      products: [],
+      counTotal: 0,
     });
   });
 

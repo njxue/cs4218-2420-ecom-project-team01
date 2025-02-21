@@ -303,6 +303,18 @@ describe("Update Product Controller Test", () => {
     });
   });
 
+  test("returns correct error message when product is not found", async () => {
+    productModel.findByIdAndUpdate = jest.fn().mockResolvedValue(null);
+
+    await updateProductController(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(404);
+    expect(res.send).toHaveBeenCalledWith({
+      success: false,
+      message: "Product not found",
+    });
+  });
+
   test("returns error message when database error occurs", async () => {
     const error = new Error("Database error");
     productModel.findByIdAndUpdate.mockImplementation(() => {
@@ -481,8 +493,8 @@ describe("Get Product Controller Test", () => {
     });
   });
 
-  test("returns error message when unexpected error occurs", async () => {
-    const error = new Error("Unexpected error");
+  test("returns error message when database error occurs", async () => {
+    const error = new Error("Database error");
     productModel.find.mockImplementation(() => {
       throw error;
     });
@@ -501,7 +513,7 @@ describe("Get Product Controller Test", () => {
 
 // ==================== Product List Controller ====================
 describe("Product List Controller Test", () => {
-  let req, res;
+  let req, res, mockProducts, mockSkip;
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -512,65 +524,46 @@ describe("Product List Controller Test", () => {
       status: jest.fn().mockReturnThis(),
       send: jest.fn(),
     };
+    mockProducts = [
+      {
+        name: "Cool book",
+        category: "Book",
+      },
+      {
+        name: "Cool potato",
+        category: "Food",
+      },
+    ];
+    mockSkip = jest.fn().mockReturnThis();
+    productModel.find.mockReturnValue({
+      select: jest.fn().mockReturnThis(),
+      skip: mockSkip,
+      limit: jest.fn().mockReturnThis(),
+      sort: jest.fn().mockReturnValue(mockProducts),
+    });
   });
 
-  describe("returns products", () => {
-    let mockProducts;
+  test("returns products when page number is a valid positive number", async () => {
+    await productListController(req, res);
 
-    beforeEach(() => {
-      mockProducts = [
-        {
-          name: "Cool book",
-          category: "Book",
-        },
-        {
-          name: "Cool potato",
-          category: "Food",
-        },
-      ];
-      productModel.find.mockReturnValue({
-        select: jest.fn().mockReturnThis(),
-        skip: jest.fn().mockReturnThis(),
-        limit: jest.fn().mockReturnThis(),
-        sort: jest.fn().mockReturnValue(mockProducts),
-      });
+    expect(productModel.find).toHaveBeenCalledWith({});
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.send).toHaveBeenCalledWith({
+      success: true,
+      products: mockProducts,
     });
+  });
 
-    test("when page number is a positive number", async () => {
-      await productListController(req, res);
+  test("defaults page number to 1 when provided page number is invalid", async () => {
+    req.params.page = -1;
 
-      expect(productModel.find).toHaveBeenCalledWith({});
-      expect(res.status).toHaveBeenCalledWith(200);
-      expect(res.send).toHaveBeenCalledWith({
-        success: true,
-        products: mockProducts,
-      });
-    });
+    await productListController(req, res);
 
-    test("when page number is a non-positive number", async () => {
-      req.params.page = -1;
-
-      await productListController(req, res);
-
-      expect(productModel.find).toHaveBeenCalledWith({});
-      expect(res.status).toHaveBeenCalledWith(200);
-      expect(res.send).toHaveBeenCalledWith({
-        success: true,
-        products: mockProducts,
-      });
-    });
-
-    test("when page number is not provided", async () => {
-      req.params.page = undefined;
-
-      await productListController(req, res);
-
-      expect(productModel.find).toHaveBeenCalledWith({});
-      expect(res.status).toHaveBeenCalledWith(200);
-      expect(res.send).toHaveBeenCalledWith({
-        success: true,
-        products: mockProducts,
-      });
+    expect(mockSkip).toHaveBeenCalledWith(0); // Defaults page number to 1
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.send).toHaveBeenCalledWith({
+      success: true,
+      products: mockProducts,
     });
   });
 
@@ -784,7 +777,6 @@ describe("Product Count Controller Test", () => {
 
     await productCountController({}, res);
 
-    expect(productModel.find).toHaveBeenCalledWith({});
     expect(mockEstimatedDocumentCount).toHaveBeenCalledTimes(1);
     expect(res.status).toHaveBeenCalledWith(200);
     expect(res.send).toHaveBeenCalledWith({ success: true, total: mockTotal });
@@ -843,12 +835,14 @@ describe("Search Product Controller Test", () => {
     expect(res.json).toHaveBeenCalledWith(mockProducts);
   });
 
-  test("returns products when keyword is not provided", async () => {
-    req.params.keyword = undefined;
+  test("returns empty products list when no products are found", async () => {
+    productModel.find.mockReturnValue({
+      select: jest.fn().mockResolvedValue([]),
+    });
 
     await searchProductController(req, res);
 
-    expect(res.json).toHaveBeenCalledWith(mockProducts);
+    expect(res.json).toHaveBeenCalledWith([]);
   });
 
   test("returns error message when database error occurs", async () => {

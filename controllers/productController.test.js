@@ -865,7 +865,7 @@ describe("Search Product Controller Test", () => {
 
 // ==================== Realted Product Controller ====================
 describe("Realted Product Controller Test", () => {
-  let req, res, mockProducts;
+  let req, res, mockProducts, mockPopulate;
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -889,10 +889,11 @@ describe("Realted Product Controller Test", () => {
         category: "Food",
       },
     ];
+    mockPopulate = jest.fn().mockReturnValue(mockProducts);
     productModel.find.mockReturnValue({
       select: jest.fn().mockReturnThis(),
       limit: jest.fn().mockReturnThis(),
-      populate: jest.fn().mockReturnValue(mockProducts),
+      populate: mockPopulate,
     });
   });
 
@@ -910,8 +911,9 @@ describe("Realted Product Controller Test", () => {
     });
   });
 
-  test("returns products when pid and cid are not provided", async () => {
+  test("returns empty products list when products are not found", async () => {
     req.params = {};
+    mockPopulate.mockReturnValue([]);
 
     await realtedProductController(req, res);
 
@@ -922,7 +924,7 @@ describe("Realted Product Controller Test", () => {
     expect(res.status).toHaveBeenCalledWith(200);
     expect(res.send).toHaveBeenCalledWith({
       success: true,
-      products: mockProducts,
+      products: [],
     });
   });
 

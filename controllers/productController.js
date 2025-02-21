@@ -190,6 +190,12 @@ export const updateProductController = async (req, res) => {
       { new: true }
     );
 
+    if (!products) {
+      return res
+        .status(404)
+        .send({ success: false, message: "Product not found" });
+    }
+
     if (photo) {
       products.photo.data = fs.readFileSync(photo.path);
       products.photo.contentType = photo.type;

@@ -495,7 +495,7 @@ describe("Get Product Controller Test", () => {
 
   test("returns empty list of products if no products exists", async () => {
     mockSort.mockReturnValue([]);
-    
+
     await getProductController({}, res);
 
     expect(productModel.find).toHaveBeenCalledWith({});
@@ -701,55 +701,63 @@ describe("Product Filters Controller Test", () => {
       status: jest.fn().mockReturnThis(),
       send: jest.fn(),
     };
+    mockProducts = [
+      {
+        name: "Cool book",
+        catgeory: "Book",
+        price: 10,
+      },
+      {
+        name: "Cool potato",
+        category: "Food",
+        price: 20,
+      },
+    ];
+    args = {
+      category: req.body.checked,
+      price: {
+        $gte: req.body.radio[0],
+        $lte: req.body.radio[1],
+      },
+    };
+    productModel.find.mockReturnValue(mockProducts);
   });
 
-  describe("returns products", () => {
-    beforeEach(() => {
-      mockProducts = [
-        {
-          name: "Cool book",
-          catgeory: "Book",
-          price: 10,
-        },
-        {
-          name: "Cool potato",
-          category: "Food",
-          price: 20,
-        },
-      ];
-      args = {
-        category: req.body.checked,
-        price: {
-          $gte: req.body.radio[0],
-          $lte: req.body.radio[1],
-        },
-      };
-      productModel.find.mockReturnValue(mockProducts);
+  test("returns products when products are found", async () => {
+    await productFiltersController(req, res);
+
+    expect(productModel.find).toHaveBeenCalledWith(args);
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.send).toHaveBeenCalledWith({
+      success: true,
+      products: mockProducts,
     });
+  });
 
-    test("when price and category filters are specified", async () => {
-      await productFiltersController(req, res);
+  test("returns products when price and category filters are not provided", async () => {
+    req.body.checked = undefined;
+    req.body.radio = undefined;
 
-      expect(productModel.find).toHaveBeenCalledWith(args);
-      expect(res.status).toHaveBeenCalledWith(200);
-      expect(res.send).toHaveBeenCalledWith({
-        success: true,
-        products: mockProducts,
-      });
+    await productFiltersController(req, res);
+
+    expect(productModel.find).toHaveBeenCalledWith({});
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.send).toHaveBeenCalledWith({
+      success: true,
+      products: mockProducts,
     });
+  });
 
-    test("when price and category filters are not specified", async () => {
-      req.body.checked = undefined;
-      req.body.radio = undefined;
+  test("returns empty list of products when no products are found", async () => {
+    productModel.find.mockReturnValue([]);
 
-      await productFiltersController(req, res);
+    await productFiltersController(req, res);
 
-      expect(productModel.find).toHaveBeenCalledWith({});
-      expect(res.status).toHaveBeenCalledWith(200);
-      expect(res.send).toHaveBeenCalledWith({
-        success: true,
-        products: mockProducts,
-      });
+    expect(productModel.find).toHaveBeenCalledWith(args);
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.send).toHaveBeenCalledWith({
+      success: true,
+      products: [],
     });
   });
 

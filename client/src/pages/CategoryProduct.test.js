@@ -102,7 +102,7 @@ describe("Product Categories Component", () => {
     const productCard = await screen.findByTestId(
       `product-${mockProducts[0]._id}`
     );
-    const moreDetailsButton = within(productCard).queryByRole("button", {
+    const moreDetailsButton = within(productCard).getByRole("button", {
       name: /More Details/i,
     });
 
@@ -121,9 +121,13 @@ describe("Product Categories Component", () => {
         category: mockCategory,
       },
     });
+    const params = useParams();
 
     render(<CategoryProduct />);
 
+    expect(axios.get).toHaveBeenCalledWith(
+      `/api/v1/product/product-category/${params.slug}`
+    );
     expect(await screen.findByText(/Category -/i)).toBeInTheDocument();
     expect(await screen.findByText(/0 result found/i)).toBeInTheDocument();
   });
@@ -137,7 +141,7 @@ describe("Product Categories Component", () => {
     const productCard = await screen.findByTestId(
       `product-${mockProducts[0]._id}`
     );
-    const addToCartButton = within(productCard).queryByRole("button", {
+    const addToCartButton = within(productCard).getByRole("button", {
       name: /ADD TO CART/i,
     });
     fireEvent.click(addToCartButton);
@@ -155,7 +159,7 @@ describe("Product Categories Component", () => {
     const productCard = await screen.findByTestId(
       `product-${mockProducts[0]._id}`
     );
-    const addToCartButton = within(productCard).queryByRole("button", {
+    const addToCartButton = within(productCard).getByRole("button", {
       name: /ADD TO CART/i,
     });
     fireEvent.click(addToCartButton);
@@ -167,11 +171,14 @@ describe("Product Categories Component", () => {
   test("logs error message when fetching products fails", async () => {
     const error = new Error("Unable to fetch products");
     axios.get.mockRejectedValueOnce(error);
+    const params = useParams();
     jest.spyOn(console, "log").mockImplementationOnce(jest.fn());
 
     await act(async () => render(<CategoryProduct />));
 
-    expect(axios.get).toHaveBeenCalled();
+    expect(axios.get).toHaveBeenCalledWith(
+      `/api/v1/product/product-category/${params.slug}`
+    );
     expect(console.log).toHaveBeenCalledWith(error);
   });
 

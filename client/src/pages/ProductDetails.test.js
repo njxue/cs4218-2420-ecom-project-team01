@@ -1,5 +1,5 @@
 import React from "react";
-import { render, screen, act, fireEvent } from "@testing-library/react";
+import { render, screen, act, fireEvent, within } from "@testing-library/react";
 import axios from "axios";
 import "@testing-library/jest-dom/extend-expect";
 import ProductDetails from "./ProductDetails";
@@ -28,27 +28,33 @@ jest.mock("./../components/Layout", () => ({ children }) => (
   <div>{children}</div>
 ));
 describe("Product Details Component", () => {
+  const mockCategory = {
+    _id: "categoryId",
+    name: "Cool stuff",
+  };
   const mockProduct = {
     _id: "productId",
     name: "Cool product name",
     description: "A cool product description",
     price: "$7.99",
-    category: {
-      _id: "categoryId",
-      name: "Cool stuff",
-    },
+    category: mockCategory,
   };
   const similarProducts = [
     {
       _id: "productId_1",
-      name: "Another product name",
-      description: "Another product description",
+      name: "Another cool stuff",
+      description: "Another cool stuff description",
       price: "$77.99",
-      slug: "product-slug",
-      category: {
-        _id: "categoryId_1",
-        name: "Another category",
-      },
+      slug: "product-slug-1",
+      category: mockCategory,
+    },
+    {
+      _id: "productId_2",
+      name: "Some other cool stuff",
+      description: "Some other cool stuff description",
+      price: "$87.99",
+      slug: "product-slug-2",
+      category: mockCategory,
     },
   ];
 
@@ -71,8 +77,9 @@ describe("Product Details Component", () => {
       name: /Cool product name/i,
     });
     expect(productPhoto).toBeInTheDocument();
-    expect(productPhoto.src).toMatch(
-      /\/api\/v1\/product\/product-photo\/productId/
+    expect(productPhoto).toHaveAttribute(
+      "src",
+      `/api/v1/product/product-photo/${mockProduct._id}`
     );
     expect(await screen.findByText(/Cool product name/i)).toBeInTheDocument();
     expect(
@@ -92,22 +99,28 @@ describe("Product Details Component", () => {
       .mockResolvedValueOnce({ data: { products: similarProducts } });
 
     render(<ProductDetails />);
-
-    expect(await screen.findByTestId("similar-product")).toBeInTheDocument();
-    const productPhoto = await screen.findByRole("img", {
-      name: /Another product name/i,
-    });
-    expect(productPhoto).toBeInTheDocument();
-    expect(productPhoto.src).toMatch(
-      /\/api\/v1\/product\/product-photo\/productId_1/
+    const renderedSimilarProducts = await screen.findAllByTestId(
+      /^similar-product-/
     );
-    expect(
-      await screen.findByText(/Another product name/i)
-    ).toBeInTheDocument();
-    expect(
-      await screen.findByText(/Another product description/i)
-    ).toBeInTheDocument();
-    expect(await screen.findByText(/\$77\.99/i)).toBeInTheDocument();
+
+    expect(renderedSimilarProducts).toHaveLength(similarProducts.length);
+    similarProducts.forEach((product) => {
+      const productCard = screen.getByTestId(`similar-product-${product._id}`);
+      expect(productCard).toBeInTheDocument();
+      expect(within(productCard).getByText(product.name)).toBeInTheDocument();
+      expect(
+        within(productCard).getByText(`${product.description}...`)
+      ).toBeInTheDocument();
+      expect(within(productCard).getByText(product.price)).toBeInTheDocument();
+      const productPhoto = within(productCard).getByRole("img", {
+        name: product.name,
+      });
+      expect(productPhoto).toBeInTheDocument();
+      expect(productPhoto).toHaveAttribute(
+        "src",
+        `/api/v1/product/product-photo/${product._id}`
+      );
+    });
   });
 
   test("renders no similar products when they dont exist", async () => {
@@ -121,6 +134,9 @@ describe("Product Details Component", () => {
 
     await act(async () => render(<ProductDetails />));
 
+    expect(axios.get).toHaveBeenCalledWith(
+      `/api/v1/product/related-product/${mockProduct._id}/${mockCategory._id}`
+    );
     expect(await screen.findByText(/No Similar Products/i)).toBeInTheDocument();
   });
 
@@ -135,11 +151,19 @@ describe("Product Details Component", () => {
     const mockNavigate = jest.fn();
     useNavigate.mockReturnValue(mockNavigate);
 
-    await act(async () => render(<ProductDetails />));
-    const moreDetailsButton = await screen.findByTestId("more-details-button");
+    render(<ProductDetails />);
+    const productCard = await screen.findByTestId(
+      `similar-product-${similarProducts[0]._id}`
+    );
+    const moreDetailsButton = within(productCard).getByRole("button", {
+      name: /More Details/i,
+    });
     fireEvent.click(moreDetailsButton);
 
-    expect(mockNavigate).toHaveBeenCalledWith("/product/product-slug");
+    expect(moreDetailsButton).toBeInTheDocument();
+    expect(mockNavigate).toHaveBeenCalledWith(
+      `/product/${similarProducts[0].slug}`
+    );
   });
 
   test("adds main product to cart on click add to cart", async () => {
@@ -233,9 +257,13 @@ describe("Product Details Component", () => {
       },
     });
     jest.spyOn(console, "log").mockImplementationOnce(jest.fn());
+    const params = useParams();
 
     await act(async () => render(<ProductDetails />));
 
+    expect(axios.get).toHaveBeenCalledWith(
+      `/api/v1/product/get-product/${params.slug}`
+    );
     expect(console.log).toHaveBeenCalledWith("No product fetched");
     expect(toast.error).toHaveBeenCalledWith("No product found");
   });
@@ -252,9 +280,13 @@ describe("Product Details Component", () => {
     const error = new Error("Unable to fetch product");
     axios.get.mockRejectedValueOnce(error);
     jest.spyOn(console, "log").mockImplementationOnce(jest.fn());
+    const params = useParams();
 
     await act(async () => render(<ProductDetails />));
 
+    expect(axios.get).toHaveBeenCalledWith(
+      `/api/v1/product/get-product/${params.slug}`
+    );
     expect(console.log).toHaveBeenCalledWith(error);
   });
 
@@ -271,6 +303,9 @@ describe("Product Details Component", () => {
 
     await act(async () => render(<ProductDetails />));
 
+    expect(axios.get).toHaveBeenCalledWith(
+      `/api/v1/product/related-product/${mockProduct._id}/${mockCategory._id}`
+    );
     expect(console.log).toHaveBeenCalledWith(error);
   });
 });

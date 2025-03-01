@@ -312,7 +312,7 @@ export const searchProductController = async (req, res) => {
 };
 
 // similar products
-export const realtedProductController = async (req, res) => {
+export const relatedProductController = async (req, res) => {
   try {
     const { pid, cid } = req.params;
     const products = await productModel

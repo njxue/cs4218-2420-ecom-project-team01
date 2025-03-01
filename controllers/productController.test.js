@@ -11,7 +11,7 @@ import {
   productFiltersController,
   productListController,
   productPhotoController,
-  realtedProductController,
+  relatedProductController,
   searchProductController,
   updateProductController,
 } from "./productController";
@@ -886,8 +886,8 @@ describe("Search Product Controller Test", () => {
   });
 });
 
-// ==================== Realted Product Controller ====================
-describe("Realted Product Controller Test", () => {
+// ==================== Related Product Controller ====================
+describe("Related Product Controller Test", () => {
   let req, res, mockProducts, mockPopulate;
 
   beforeEach(() => {
@@ -921,7 +921,7 @@ describe("Realted Product Controller Test", () => {
   });
 
   test("returns products when pid and cid are provided", async () => {
-    await realtedProductController(req, res);
+    await relatedProductController(req, res);
 
     expect(productModel.find).toHaveBeenCalledWith({
       category: req.params.cid,
@@ -938,7 +938,7 @@ describe("Realted Product Controller Test", () => {
     req.params = {};
     mockPopulate.mockReturnValue([]);
 
-    await realtedProductController(req, res);
+    await relatedProductController(req, res);
 
     expect(productModel.find).toHaveBeenCalledWith({
       category: req.params.cid,
@@ -958,7 +958,7 @@ describe("Realted Product Controller Test", () => {
     });
     jest.spyOn(console, "log").mockImplementationOnce(jest.fn());
 
-    await realtedProductController(req, res);
+    await relatedProductController(req, res);
 
     expect(res.status).toHaveBeenCalledWith(500);
     expect(res.send).toHaveBeenCalledWith({

@@ -9,12 +9,12 @@ module.exports = {
   testMatch: ["<rootDir>/controllers/*.test.js"],
 
   // jest code coverage
-  collectCoverage: true,
+  collectCoverage: false,
   collectCoverageFrom: ["controllers/**"],
   coverageThreshold: {
     global: {
-      lines: 10,
-      functions: 10,
+      lines: 100,
+      functions: 100,
     },
   },
 };

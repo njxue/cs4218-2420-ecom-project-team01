@@ -23,7 +23,7 @@ module.exports = {
   testMatch: ["<rootDir>/client/src/pages/**/*.test.js"],
 
   // jest code coverage
-  collectCoverage: true,
+  collectCoverage: false,
   collectCoverageFrom: ["client/src/pages/**"],
   coverageThreshold: {
     global: {

@@ -26,36 +26,39 @@ const UpdateProduct = () => {
       const { data } = await axios.get(
         `/api/v1/product/get-product/${params.slug}`
       );
+      if (!data.success || !data.product) {
+        toast.error(data.message);
+        return;
+      }
       setName(data.product.name);
       setId(data.product._id);
       setDescription(data.product.description);
-      setPrice(data.product.price);
       setPrice(data.product.price);
       setQuantity(data.product.quantity);
       setShipping(data.product.shipping);
       setCategory(data.product.category._id);
     } catch (error) {
+      toast.error("Something went wrong in getting product");
       console.log(error);
     }
   };
-  useEffect(() => {
-    getSingleProduct();
-    //eslint-disable-next-line
-  }, []);
-  //get all category
+
   const getAllCategory = async () => {
     try {
       const { data } = await axios.get("/api/v1/category/get-category");
       if (data?.success) {
         setCategories(data?.category);
+      } else {
+        toast.error(data?.message);
       }
     } catch (error) {
       console.log(error);
-      toast.error("Something wwent wrong in getting catgeory");
+      toast.error("Something went wrong in getting category");
     }
   };
 
   useEffect(() => {
+    getSingleProduct();
     getAllCategory();
   }, []);
 
@@ -70,11 +73,12 @@ const UpdateProduct = () => {
       productData.append("quantity", quantity);
       photo && productData.append("photo", photo);
       productData.append("category", category);
-      const { data } = axios.put(
+      productData.append("shipping", shipping);
+      const { data } = await axios.put(
         `/api/v1/product/update-product/${id}`,
         productData
       );
-      if (data?.success) {
+      if (!data?.success) {
         toast.error(data?.message);
       } else {
         toast.success("Product Updated Successfully");
@@ -94,11 +98,14 @@ const UpdateProduct = () => {
       const { data } = await axios.delete(
         `/api/v1/product/delete-product/${id}`
       );
-      toast.success("Product DEleted Succfully");
+      if (!data?.success) {
+        return toast.error(data.message);
+      }
+      toast.success("Product Deleted Successfully");
       navigate("/dashboard/admin/products");
     } catch (error) {
-      console.log(error);
       toast.error("Something went wrong");
+      console.log(error);
     }
   };
   return (
@@ -112,7 +119,8 @@ const UpdateProduct = () => {
             <h1>Update Product</h1>
             <div className="m-1 w-75">
               <Select
-                bordered={false}
+                data-testid="select-category"
+                variant={false}
                 placeholder="Select a category"
                 size="large"
                 showSearch
@@ -120,8 +128,7 @@ const UpdateProduct = () => {
                 onChange={(value) => {
                   setCategory(value);
                 }}
-                value={category}
-              >
+                value={category}>
                 {categories?.map((c) => (
                   <Option key={c._id} value={c._id}>
                     {c.name}
@@ -132,6 +139,7 @@ const UpdateProduct = () => {
                 <label className="btn btn-outline-secondary col-md-12">
                   {photo ? photo.name : "Upload Photo"}
                   <input
+                    data-testid="photo-input"
                     type="file"
                     name="photo"
                     accept="image/*"
@@ -144,6 +152,7 @@ const UpdateProduct = () => {
                 {photo ? (
                   <div className="text-center">
                     <img
+                      data-testid="uploaded-product-photo"
                       src={URL.createObjectURL(photo)}
                       alt="product_photo"
                       height={"200px"}
@@ -153,6 +162,7 @@ const UpdateProduct = () => {
                 ) : (
                   <div className="text-center">
                     <img
+                      data-testid="fetched-product-photo"
                       src={`/api/v1/product/product-photo/${id}`}
                       alt="product_photo"
                       height={"200px"}
@@ -200,16 +210,16 @@ const UpdateProduct = () => {
               </div>
               <div className="mb-3">
                 <Select
-                  bordered={false}
-                  placeholder="Select Shipping "
+                  data-testid="select-shipping"
+                  variant={false}
+                  placeholder="Select Shipping"
                   size="large"
                   showSearch
                   className="form-select mb-3"
                   onChange={(value) => {
-                    setShipping(value);
+                    setShipping(value === "1");
                   }}
-                  value={shipping ? "yes" : "No"}
-                >
+                  value={shipping ? "1" : "0"}>
                   <Option value="0">No</Option>
                   <Option value="1">Yes</Option>
                 </Select>

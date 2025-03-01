@@ -31,4 +31,6 @@ module.exports = {
       functions: 100,
     },
   },
+  coverageReporters: ["text", "lcov"],
+  silent: false,
 };

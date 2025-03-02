@@ -38,9 +38,36 @@ const CreateProduct = () => {
     getAllCategory();
   }, []);
 
+  const validate = () => {
+    if (
+      !name?.trim() ||
+      !description?.trim() ||
+      !category ||
+      shipping === "" ||
+      price === "" ||
+      quantity === "" ||
+      photo === ""
+    ) {
+      toast.error("You have some missing fields");
+      return false;
+    }
+    if (price < 0) {
+      toast.error("Price cannot be negative");
+      return false;
+    }
+    if (quantity < 0) {
+      toast.error("Quantity cannot be negative");
+      return false;
+    }
+    return true;
+  };
+
   //create product function
   const handleCreate = async (e) => {
     e.preventDefault();
+    if (!validate()) {
+      return;
+    }
     try {
       const productData = new FormData();
       productData.append("name", name);
@@ -77,6 +104,7 @@ const CreateProduct = () => {
           </div>
           <div className="col-md-9">
             <h1>Create Product</h1>
+
             <div className="m-1 w-75">
               <Select
                 data-testid="select-category"

@@ -42,15 +42,13 @@ describe("Create Product Controller Test", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-
     slugify.mockImplementation((str) => str);
-
     mockProductInstance = {
       name: "Cool product",
       description: "This is a cool product",
-      price: 100,
+      price: 0,
       category: "category",
-      quantity: 10,
+      quantity: 0,
       shipping: false,
       photo: {
         data: "fakeData",
@@ -58,10 +56,8 @@ describe("Create Product Controller Test", () => {
       },
       save: jest.fn(),
     };
-
-    const { name, description, price, category, quantity, photo } =
+    const { name, description, price, category, quantity, photo, shipping } =
       mockProductInstance;
-
     req = {
       fields: {
         name,
@@ -69,6 +65,7 @@ describe("Create Product Controller Test", () => {
         price,
         category,
         quantity,
+        shipping,
       },
       files: {
         photo: {
@@ -85,49 +82,22 @@ describe("Create Product Controller Test", () => {
     };
   });
 
-  describe("creates and saves product", () => {
-    let assertProductSaved;
+  test("when all fields are present and valid", async () => {
+    fs.readFileSync = jest.fn();
+    productModel.mockReturnValue(mockProductInstance);
 
-    beforeEach(() => {
-      jest.clearAllMocks();
-      fs.readFileSync = jest.fn();
-      productModel.mockReturnValue(mockProductInstance);
+    await createProductController(req, res);
 
-      assertProductSaved = () => {
-        expect(productModel).toHaveBeenCalledWith({
-          ...req.fields,
-          slug: slugify(req.fields.name),
-        });
-        expect(mockProductInstance.save).toHaveBeenCalledTimes(1);
-        expect(res.status).toHaveBeenCalledWith(201);
-        expect(res.send).toHaveBeenCalledWith({
-          success: true,
-          message: "Product Created Successfully",
-          products: mockProductInstance,
-        });
-      };
+    expect(productModel).toHaveBeenCalledWith({
+      ...req.fields,
+      slug: slugify(req.fields.name),
     });
-
-    test("when all fields are present and valid", async () => {
-      await createProductController(req, res);
-
-      assertProductSaved();
-    });
-
-    test("when photo is missing", async () => {
-      req.files.photo = null;
-
-      await createProductController(req, res);
-
-      assertProductSaved();
-    });
-
-    test("when shipping is missing", async () => {
-      req.fields.shipping = null;
-
-      await createProductController(req, res);
-
-      assertProductSaved();
+    expect(mockProductInstance.save).toHaveBeenCalledTimes(1);
+    expect(res.status).toHaveBeenCalledWith(201);
+    expect(res.send).toHaveBeenCalledWith({
+      success: true,
+      message: "Product Created Successfully",
+      products: mockProductInstance,
     });
   });
 
@@ -137,6 +107,7 @@ describe("Create Product Controller Test", () => {
     ["price", "Price is Required"],
     ["category", "Category is Required"],
     ["quantity", "Quantity is Required"],
+    ["shipping", "Shipping is Required"],
   ])(
     "returns correct error message when %s is missing",
     async (field, expectedMessage) => {
@@ -144,21 +115,53 @@ describe("Create Product Controller Test", () => {
 
       await createProductController(req, res);
 
-      expect(res.status).toHaveBeenCalledWith(500);
+      expect(res.status).toHaveBeenCalledWith(400);
       expect(res.send).toHaveBeenCalledWith({ error: expectedMessage });
     }
   );
+
+  test("returns correct error message when photo is missing", async () => {
+    req.files.photo = null;
+
+    await createProductController(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.send).toHaveBeenCalledWith({ error: "Photo is Required" });
+  });
 
   test("returns correct error message when photo is more than 1mb in size", async () => {
     req.files.photo.size = 1000001;
 
     await createProductController(req, res);
 
-    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.status).toHaveBeenCalledWith(400);
     expect(res.send).toHaveBeenCalledWith({
-      error: "photo is Required and should be less then 1mb",
+      error: "Photo should be less then 1mb",
     });
   });
+
+  test("returns correct error message when price is negative", async () => {
+    req.fields.price = -1;
+
+    await createProductController(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.send).toHaveBeenCalledWith({
+      error: "Price cannot be negative",
+    });
+  });
+
+  test("returns correct error message when quantity is negative", async () => {
+    req.fields.quantity = -1;
+
+    await createProductController(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.send).toHaveBeenCalledWith({
+      error: "Quantity cannot be negative",
+    });
+  });
+
   test("returns error message when database error occurs", async () => {
     const error = new Error("Database error");
     productModel.mockImplementation(() => {
@@ -254,7 +257,7 @@ describe("Update Product Controller Test", () => {
       };
     });
 
-    test("when all fields are present and valid", async () => {
+    test("when all required fields are present and valid", async () => {
       await updateProductController(req, res);
 
       assertProductSaved();
@@ -262,14 +265,6 @@ describe("Update Product Controller Test", () => {
 
     test("when photo is missing", async () => {
       req.files.photo = null;
-
-      await updateProductController(req, res);
-
-      assertProductSaved();
-    });
-
-    test("when shipping is missing", async () => {
-      req.fields.shipping = null;
 
       await updateProductController(req, res);
 
@@ -283,12 +278,13 @@ describe("Update Product Controller Test", () => {
     ["price", "Price is Required"],
     ["category", "Category is Required"],
     ["quantity", "Quantity is Required"],
+    ["shipping", "Shipping is Required"],
   ])("when %s is missing", async (field, expectedMessage) => {
     req.fields[field] = null;
 
     await updateProductController(req, res);
 
-    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.status).toHaveBeenCalledWith(400);
     expect(res.send).toHaveBeenCalledWith({ error: expectedMessage });
   });
 
@@ -297,7 +293,7 @@ describe("Update Product Controller Test", () => {
 
     await updateProductController(req, res);
 
-    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.status).toHaveBeenCalledWith(400);
     expect(res.send).toHaveBeenCalledWith({
       error: "photo is Required and should be less then 1mb",
     });

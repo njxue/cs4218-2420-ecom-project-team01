@@ -42,7 +42,7 @@ jest.mock("antd", () => {
 });
 global.URL.createObjectURL = jest.fn().mockReturnValue("photoUrl");
 
-describe("Create Product Component", () => {
+describe("Update Product Component", () => {
   let mockCategories,
     inputValues,
     mockProduct,
@@ -256,6 +256,57 @@ describe("Create Product Component", () => {
     );
   });
 
+  test.each([
+    ["name", () => screen.getByPlaceholderText(/write a name/i)],
+    ["description", () => screen.getByPlaceholderText(/write a description/i)],
+    ["price", () => screen.getByPlaceholderText(/write a price/i)],
+    ["quantity", () => screen.getByPlaceholderText(/write a quantity/i)],
+  ])("returns error message when %s is missing", async (field, getSelector) => {
+    render(<UpdateProduct />);
+    userEvent.clear(getSelector());
+    userEvent.click(
+      screen.getByRole("button", {
+        name: /update product/i,
+      })
+    );
+
+    await waitFor(() =>
+      expect(toast.error).toHaveBeenCalledWith("You have some missing fields")
+    );
+  });
+
+  test("returns correct error message when price is negative", async () => {
+    inputValues.price = "-1";
+
+    render(<UpdateProduct />);
+    await populateInputFields();
+    userEvent.click(
+      screen.getByRole("button", {
+        name: /update product/i,
+      })
+    );
+
+    await waitFor(() =>
+      expect(toast.error).toHaveBeenCalledWith("Price cannot be negative")
+    );
+  });
+
+  test("returns correct error message when quantity is negative", async () => {
+    inputValues.quantity = "-1";
+
+    render(<UpdateProduct />);
+    await populateInputFields();
+    userEvent.click(
+      screen.getByRole("button", {
+        name: /update product/i,
+      })
+    );
+
+    await waitFor(() =>
+      expect(toast.error).toHaveBeenCalledWith("Quantity cannot be negative")
+    );
+  });
+
   test("returns error if form submission fails due to api error", async () => {
     const errorMessage = "Unable to update product";
     axios.put.mockResolvedValue({
@@ -264,6 +315,7 @@ describe("Create Product Component", () => {
     jest.spyOn(console, "log").mockImplementationOnce(jest.fn());
 
     render(<UpdateProduct />);
+    await populateInputFields();
     userEvent.click(
       screen.getByRole("button", {
         name: /update product/i,
@@ -275,11 +327,12 @@ describe("Create Product Component", () => {
   });
 
   test("returns error if form submission fails due to an unexpected error", async () => {
-    const error = new Error("Unable to create product");
+    const error = new Error("Unable to update product");
     axios.put.mockRejectedValueOnce(error);
     jest.spyOn(console, "log").mockImplementationOnce(jest.fn());
 
     render(<UpdateProduct />);
+    await populateInputFields();
     userEvent.click(
       screen.getByRole("button", {
         name: /update product/i,

@@ -62,9 +62,35 @@ const UpdateProduct = () => {
     getAllCategory();
   }, []);
 
+  const validate = () => {
+    if (
+      !name?.trim() ||
+      !description?.trim() ||
+      !category ||
+      shipping === "" ||
+      price === "" ||
+      quantity === ""
+    ) {
+      toast.error("You have some missing fields");
+      return false;
+    }
+    if (price < 0) {
+      toast.error("Price cannot be negative");
+      return false;
+    }
+    if (quantity < 0) {
+      toast.error("Quantity cannot be negative");
+      return false;
+    }
+    return true;
+  };
+
   //create product function
   const handleUpdate = async (e) => {
     e.preventDefault();
+    if (!validate()) {
+      return;
+    }
     try {
       const productData = new FormData();
       productData.append("name", name);
@@ -160,15 +186,17 @@ const UpdateProduct = () => {
                     />
                   </div>
                 ) : (
-                  <div className="text-center">
-                    <img
-                      data-testid="fetched-product-photo"
-                      src={`/api/v1/product/product-photo/${id}`}
-                      alt="product_photo"
-                      height={"200px"}
-                      className="img img-responsive"
-                    />
-                  </div>
+                  id !== "" && (
+                    <div className="text-center">
+                      <img
+                        data-testid="fetched-product-photo"
+                        src={`/api/v1/product/product-photo/${id}`}
+                        alt="product_photo"
+                        height={"200px"}
+                        className="img img-responsive"
+                      />
+                    </div>
+                  )
                 )}
               </div>
               <div className="mb-3">

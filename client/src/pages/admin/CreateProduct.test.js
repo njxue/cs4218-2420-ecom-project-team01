@@ -51,8 +51,8 @@ describe("Create Product Component", () => {
     inputValues = {
       name: "Cool product",
       description: "This product is quite cool",
-      price: "7.99",
-      quantity: "3",
+      price: "0",
+      quantity: "0",
       category: mockCategories[0]._id,
       shipping: "0",
       photo: new File(["mock content"], "mockFile.jpg", {
@@ -191,7 +191,7 @@ describe("Create Product Component", () => {
       inputValues.shipping
     );
     expect(screen.getByTestId("photo-input").files[0]).toBe(inputValues.photo);
-    expect(screen.getByText("mockFile.jpg")).toBeInTheDocument();
+    expect(screen.getByText(inputValues.photo.name)).toBeInTheDocument();
   });
 
   test("should submit form successfully", async () => {
@@ -226,6 +226,51 @@ describe("Create Product Component", () => {
     expect(mockNavigate).toHaveBeenCalledWith("/dashboard/admin/products");
   });
 
+  test("returns correct error message when fields are empty", async () => {
+    render(<CreateProduct />);
+    userEvent.click(
+      screen.getByRole("button", {
+        name: /create product/i,
+      })
+    );
+
+    await waitFor(() =>
+      expect(toast.error).toHaveBeenCalledWith("You have some missing fields")
+    );
+  });
+
+  test("returns correct error message when price is negative", async () => {
+    inputValues.price = "-1";
+
+    render(<CreateProduct />);
+    await populateInputFields();
+    userEvent.click(
+      screen.getByRole("button", {
+        name: /create product/i,
+      })
+    );
+
+    await waitFor(() =>
+      expect(toast.error).toHaveBeenCalledWith("Price cannot be negative")
+    );
+  });
+
+  test("returns correct error message when quantity is negative", async () => {
+    inputValues.quantity = "-1";
+
+    render(<CreateProduct />);
+    await populateInputFields();
+    userEvent.click(
+      screen.getByRole("button", {
+        name: /create product/i,
+      })
+    );
+
+    await waitFor(() =>
+      expect(toast.error).toHaveBeenCalledWith("Quantity cannot be negative")
+    );
+  });
+
   test("returns error if form submission fails due to api error", async () => {
     const errorMessage = "Unable to create product";
     axios.post.mockResolvedValue({
@@ -234,6 +279,7 @@ describe("Create Product Component", () => {
     jest.spyOn(console, "log").mockImplementationOnce(jest.fn());
 
     render(<CreateProduct />);
+    await populateInputFields();
     userEvent.click(
       screen.getByRole("button", {
         name: /create product/i,
@@ -243,12 +289,14 @@ describe("Create Product Component", () => {
     await waitFor(() => expect(toast.error).toHaveBeenCalledWith(errorMessage));
     expect(axios.post).toHaveBeenCalled();
   });
+
   test("returns error if form submission fails due to an unexpected error", async () => {
     const error = new Error("Unable to create product");
     axios.post.mockRejectedValueOnce(error);
     jest.spyOn(console, "log").mockImplementationOnce(jest.fn());
 
     render(<CreateProduct />);
+    await populateInputFields();
     userEvent.click(
       screen.getByRole("button", {
         name: /create product/i,
@@ -261,6 +309,7 @@ describe("Create Product Component", () => {
     expect(axios.post).toHaveBeenCalled();
     expect(console.log).toHaveBeenCalledWith(error);
   });
+
   test("returns error if unable to fetch categories due to api error", async () => {
     const errorMessage = "Unable to fetch categories";
     axios.get.mockResolvedValueOnce({

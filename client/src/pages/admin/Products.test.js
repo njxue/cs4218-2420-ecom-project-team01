@@ -1,5 +1,5 @@
 import React from "react";
-import { render, screen, act, within, waitFor } from "@testing-library/react";
+import { render, screen, within, waitFor } from "@testing-library/react";
 import axios from "axios";
 import "@testing-library/jest-dom/extend-expect";
 import toast from "react-hot-toast";
@@ -113,7 +113,7 @@ describe("Products Test", () => {
         <Products />
       </MemoryRouter>
     );
-    
+
     await waitFor(() =>
       expect(toast.error).toHaveBeenCalledWith("Something Went Wrong")
     );

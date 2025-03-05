@@ -10,7 +10,7 @@ import dotenv from "dotenv";
 dotenv.config();
 
 //payment gateway
-var gateway = new braintree.BraintreeGateway({
+const gateway = new braintree.BraintreeGateway({
   environment: braintree.Environment.Sandbox,
   merchantId: process.env.BRAINTREE_MERCHANT_ID,
   publicKey: process.env.BRAINTREE_PUBLIC_KEY,
@@ -323,6 +323,16 @@ export const searchProductController = async (req, res) => {
 export const relatedProductController = async (req, res) => {
   try {
     const { pid, cid } = req.params;
+    if (pid == null) {
+      return res
+        .status(400)
+        .send({ success: false, message: "pid is missing" });
+    }
+    if (cid == null) {
+      return res
+        .status(400)
+        .send({ success: false, message: "cid is missing" });
+    }
     const products = await productModel
       .find({
         category: cid,
@@ -398,7 +408,7 @@ export const brainTreePaymentController = async (req, res) => {
     cart.map((i) => {
       total += i.price;
     });
-    let newTransaction = gateway.transaction.sale(
+    gateway.transaction.sale(
       {
         amount: total,
         paymentMethodNonce: nonce,
@@ -408,7 +418,7 @@ export const brainTreePaymentController = async (req, res) => {
       },
       function (error, result) {
         if (result) {
-          const order = new orderModel({
+          new orderModel({
             products: cart,
             payment: result,
             buyer: req.user._id,

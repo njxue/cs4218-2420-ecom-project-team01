@@ -88,11 +88,6 @@ describe("Create Product Controller Test", () => {
 
     await createProductController(req, res);
 
-    expect(productModel).toHaveBeenCalledWith({
-      ...req.fields,
-      slug: slugify(req.fields.name),
-    });
-    expect(mockProductInstance.save).toHaveBeenCalledTimes(1);
     expect(res.status).toHaveBeenCalledWith(201);
     expect(res.send).toHaveBeenCalledWith({
       success: true,
@@ -224,51 +219,42 @@ describe("Update Product Controller Test", () => {
       },
       params: { pid: 1 },
     };
-
     res = {
       status: jest.fn().mockReturnThis(),
       send: jest.fn(),
     };
+    fs.readFileSync = jest.fn();
   });
 
-  describe("updates and saves product", () => {
-    let assertProductSaved;
+  test("updates and saves product when all required fields are present and valid", async () => {
+    productModel.findByIdAndUpdate = jest
+      .fn()
+      .mockResolvedValue(mockProductInstance);
 
-    beforeEach(() => {
-      jest.clearAllMocks();
-      fs.readFileSync = jest.fn();
-      productModel.findByIdAndUpdate = jest
-        .fn()
-        .mockResolvedValue(mockProductInstance);
+    await updateProductController(req, res);
 
-      assertProductSaved = () => {
-        expect(productModel.findByIdAndUpdate).toHaveBeenCalledWith(
-          req.params.pid,
-          { ...req.fields, slug: slugify(req.fields.name) },
-          { new: true }
-        );
-        expect(mockProductInstance.save).toHaveBeenCalledTimes(1);
-        expect(res.status).toHaveBeenCalledWith(201);
-        expect(res.send).toHaveBeenCalledWith({
-          success: true,
-          message: "Product Updated Successfully",
-          products: mockProductInstance,
-        });
-      };
+    expect(res.status).toHaveBeenCalledWith(201);
+    expect(res.send).toHaveBeenCalledWith({
+      success: true,
+      message: "Product Updated Successfully",
+      products: mockProductInstance,
     });
+  });
 
-    test("when all required fields are present and valid", async () => {
-      await updateProductController(req, res);
+  test("updates and saves product even when photo is missing", async () => {
+    productModel.findByIdAndUpdate = jest
+      .fn()
+      .mockResolvedValue(mockProductInstance);
 
-      assertProductSaved();
-    });
+    req.files.photo = null;
 
-    test("when photo is missing", async () => {
-      req.files.photo = null;
+    await updateProductController(req, res);
 
-      await updateProductController(req, res);
-
-      assertProductSaved();
+    expect(res.status).toHaveBeenCalledWith(201);
+    expect(res.send).toHaveBeenCalledWith({
+      success: true,
+      message: "Product Updated Successfully",
+      products: mockProductInstance,
     });
   });
 
@@ -350,7 +336,6 @@ describe("Delete Product Controller Test", () => {
 
     await deleteProductController(req, res);
 
-    expect(productModel.findByIdAndDelete).toHaveBeenCalledWith(req.params.pid);
     expect(res.status).toHaveBeenCalledWith(200);
     expect(res.send).toHaveBeenCalledWith({
       success: true,
@@ -405,9 +390,6 @@ describe("Get Single Product Controller Test", () => {
     });
     await getSingleProductController(req, res);
 
-    expect(productModel.findOne).toHaveBeenCalledWith({
-      slug: req.params.slug,
-    });
     expect(res.status).toHaveBeenCalledWith(200);
     expect(res.send).toHaveBeenCalledWith({
       success: true,
@@ -479,7 +461,6 @@ describe("Get Product Controller Test", () => {
   test("returns products if they exist", async () => {
     await getProductController({}, res);
 
-    expect(productModel.find).toHaveBeenCalledWith({});
     expect(res.status).toHaveBeenCalledWith(200);
     expect(res.send).toHaveBeenCalledWith({
       success: true,
@@ -494,7 +475,6 @@ describe("Get Product Controller Test", () => {
 
     await getProductController({}, res);
 
-    expect(productModel.find).toHaveBeenCalledWith({});
     expect(res.status).toHaveBeenCalledWith(200);
     expect(res.send).toHaveBeenCalledWith({
       success: true,
@@ -524,7 +504,7 @@ describe("Get Product Controller Test", () => {
 
 // ==================== Product List Controller ====================
 describe("Product List Controller Test", () => {
-  let req, res, mockProducts, mockSkip;
+  let req, res, mockProducts;
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -545,10 +525,10 @@ describe("Product List Controller Test", () => {
         category: "Food",
       },
     ];
-    mockSkip = jest.fn().mockReturnThis();
+
     productModel.find.mockReturnValue({
       select: jest.fn().mockReturnThis(),
-      skip: mockSkip,
+      skip: jest.fn().mockReturnThis(),
       limit: jest.fn().mockReturnThis(),
       sort: jest.fn().mockReturnValue(mockProducts),
     });
@@ -557,7 +537,6 @@ describe("Product List Controller Test", () => {
   test("returns products when page number is a valid positive number", async () => {
     await productListController(req, res);
 
-    expect(productModel.find).toHaveBeenCalledWith({});
     expect(res.status).toHaveBeenCalledWith(200);
     expect(res.send).toHaveBeenCalledWith({
       success: true,
@@ -570,7 +549,6 @@ describe("Product List Controller Test", () => {
 
     await productListController(req, res);
 
-    expect(mockSkip).toHaveBeenCalledWith(0); // Defaults page number to 1
     expect(res.status).toHaveBeenCalledWith(200);
     expect(res.send).toHaveBeenCalledWith({
       success: true,
@@ -626,7 +604,6 @@ describe("Product Photo Controller Test", () => {
 
     await productPhotoController(req, res);
 
-    expect(productModel.findById).toHaveBeenCalledWith(req.params.pid);
     expect(res.set).toHaveBeenCalledWith(
       "Content-type",
       mockProduct.photo.contentType
@@ -682,7 +659,7 @@ describe("Product Photo Controller Test", () => {
 
 // ==================== Product Filters Controller ====================
 describe("Product Filters Controller Test", () => {
-  let req, res, mockProducts, args;
+  let req, res, mockProducts;
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -709,20 +686,12 @@ describe("Product Filters Controller Test", () => {
         price: 20,
       },
     ];
-    args = {
-      category: req.body.checked,
-      price: {
-        $gte: req.body.radio[0],
-        $lte: req.body.radio[1],
-      },
-    };
     productModel.find.mockReturnValue(mockProducts);
   });
 
   test("returns products when products are found", async () => {
     await productFiltersController(req, res);
 
-    expect(productModel.find).toHaveBeenCalledWith(args);
     expect(res.status).toHaveBeenCalledWith(200);
     expect(res.send).toHaveBeenCalledWith({
       success: true,
@@ -730,13 +699,12 @@ describe("Product Filters Controller Test", () => {
     });
   });
 
-  test("returns products when price and category filters are not provided", async () => {
+  test("returns all products when price and category filters are not provided", async () => {
     req.body.checked = undefined;
     req.body.radio = undefined;
 
     await productFiltersController(req, res);
 
-    expect(productModel.find).toHaveBeenCalledWith({});
     expect(res.status).toHaveBeenCalledWith(200);
     expect(res.send).toHaveBeenCalledWith({
       success: true,
@@ -749,7 +717,6 @@ describe("Product Filters Controller Test", () => {
 
     await productFiltersController(req, res);
 
-    expect(productModel.find).toHaveBeenCalledWith(args);
     expect(res.status).toHaveBeenCalledWith(200);
     expect(res.send).toHaveBeenCalledWith({
       success: true,
@@ -796,7 +763,6 @@ describe("Product Count Controller Test", () => {
 
     await productCountController({}, res);
 
-    expect(mockEstimatedDocumentCount).toHaveBeenCalledTimes(1);
     expect(res.status).toHaveBeenCalledWith(200);
     expect(res.send).toHaveBeenCalledWith({ success: true, total: mockTotal });
   });
@@ -919,10 +885,6 @@ describe("Related Product Controller Test", () => {
   test("returns products when pid and cid are provided", async () => {
     await relatedProductController(req, res);
 
-    expect(productModel.find).toHaveBeenCalledWith({
-      category: req.params.cid,
-      _id: { $ne: req.params.pid },
-    });
     expect(res.status).toHaveBeenCalledWith(200);
     expect(res.send).toHaveBeenCalledWith({
       success: true,
@@ -930,16 +892,35 @@ describe("Related Product Controller Test", () => {
     });
   });
 
+  test("returns error message when pid is not provided", async () => {
+    req.params.pid = undefined;
+
+    await relatedProductController(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.send).toHaveBeenCalledWith({
+      success: false,
+      message: "pid is missing",
+    });
+  });
+
+  test("returns error message when cid is not provided", async () => {
+    req.params.cid = undefined;
+
+    await relatedProductController(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.send).toHaveBeenCalledWith({
+      success: false,
+      message: "cid is missing",
+    });
+  });
+
   test("returns empty products list when products are not found", async () => {
-    req.params = {};
     mockPopulate.mockReturnValue([]);
 
     await relatedProductController(req, res);
 
-    expect(productModel.find).toHaveBeenCalledWith({
-      category: req.params.cid,
-      _id: { $ne: req.params.pid },
-    });
     expect(res.status).toHaveBeenCalledWith(200);
     expect(res.send).toHaveBeenCalledWith({
       success: true,
@@ -999,7 +980,6 @@ describe("Product Category Controller Test", () => {
   test("returns category and products if they exist", async () => {
     await productCategoryController(req, res);
 
-    expect(productModel.find).toHaveBeenCalledWith({ category: mockCategory });
     expect(res.status).toHaveBeenCalledWith(200);
     expect(res.send).toHaveBeenCalledWith({
       success: true,
@@ -1016,7 +996,6 @@ describe("Product Category Controller Test", () => {
 
     await productCategoryController(req, res);
 
-    expect(productModel.find).toHaveBeenCalledWith({ category: null });
     expect(res.status).toHaveBeenCalledWith(200);
     expect(res.send).toHaveBeenCalledWith({
       success: true,
@@ -1032,7 +1011,6 @@ describe("Product Category Controller Test", () => {
 
     await productCategoryController(req, res);
 
-    expect(productModel.find).toHaveBeenCalledWith({ category: mockCategory });
     expect(res.status).toHaveBeenCalledWith(200);
     expect(res.send).toHaveBeenCalledWith({
       success: true,

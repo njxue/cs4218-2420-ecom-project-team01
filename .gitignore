@@ -3,3 +3,7 @@ node_modules
 /playwright-report/
 /blob-report/
 /playwright/.cache/
+/coverage/
+/.scannerwork/
+sonar-project.properties
+.env

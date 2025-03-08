@@ -10,17 +10,9 @@ import userEvent from "@testing-library/user-event";
 
 jest.mock("axios");
 jest.mock("react-hot-toast");
-jest.mock("../context/auth", () => ({
-  useAuth: jest.fn(() => [null, jest.fn()]),
-}));
 jest.mock("../context/cart", () => ({
   useCart: jest.fn(() => [null, jest.fn()]),
 }));
-jest.mock("../context/search", () => ({
-  useSearch: jest.fn(() => [{ keyword: "" }, jest.fn()]),
-}));
-jest.mock("../hooks/useCategory", () => jest.fn(() => []));
-
 jest.mock("react-router-dom", () => ({
   useParams: jest.fn().mockReturnValue({ slug: "test-slug" }),
   useNavigate: jest.fn(),

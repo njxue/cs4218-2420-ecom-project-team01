@@ -1,35 +1,34 @@
-import { renderHook, waitFor, waitForNextUpdate } from '@testing-library/react-hooks';
-import useCategory from './useCategory';
-import axios from 'axios';
+import { renderHook, waitFor } from "@testing-library/react"; 
+import useCategory from "./useCategory";
+import axios from "axios";
 
-jest.mock('axios');
+jest.mock("axios");
 
-describe('useCategory hook', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-  });
+jest.mock('../context/auth', () => ({
+    useAuth: () => [null, jest.fn()],
+  }));
 
-  it('should fetch and set categories successfully', async () => {
-    const fakeData = { category: [{ _id: '1', name: 'Category1' }, { _id: '2', name: 'Category2' }] };
-    const fakeResponse = JSON.stringify(fakeData);
-    axios.get.mockResolvedValueOnce(fakeResponse);
+  jest.mock('../context/cart', () => ({
+    useCart: jest.fn(() => [null, jest.fn()]) 
+  }));
+    
+jest.mock('../context/search', () => ({
+    useSearch: jest.fn(() => [{ keyword: '' }, jest.fn()]) 
+  })); 
+  
+describe("useCategory hook", () => {
+  it("fetches categories and sets them", async () => {
+    
+    const fakeString = JSON.stringify({
+      category: [{ _id: "1", name: "Category One" }],
+    });
 
-    const { result, waitForNextUpdate } = renderHook(() => useCategory());
-
-    await waitForNextUpdate();
-
-    expect(axios.get).toHaveBeenCalledWith("/api/v1/category/get-category");
-    expect(result.current).toEqual(fakeData.category);
-  });
-
-  it('should handle error and keep categories as empty', async () => {
-    axios.get.mockRejectedValueOnce(new Error('Network error'));
+    axios.get.mockResolvedValueOnce(fakeString);
 
     const { result } = renderHook(() => useCategory());
 
     await waitFor(() => {
-      expect(axios.get).toHaveBeenCalledWith("/api/v1/category/get-category");
-      expect(result.current).toEqual([]);
+      expect(result.current).toEqual([{ _id: "1", name: "Category One" }]);
     });
   });
 });

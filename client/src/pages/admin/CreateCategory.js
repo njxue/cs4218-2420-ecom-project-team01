@@ -141,17 +141,14 @@ const CreateCategory = () => {
                 </tbody>
               </table>
             </div>
-            <Modal
-              onCancel={() => setVisible(false)}
-              footer={null}
-              open={visible}
-            >
-              <CategoryForm
-                value={updatedName}
-                setValue={setUpdatedName}
-                handleSubmit={handleUpdate}
-              />
-            </Modal>
+            <Modal onCancel={() => setVisible(false)} footer={null} open={visible}>
+            <CategoryForm
+              data-testid="modal-category-form"
+              value={updatedName}
+              setValue={setUpdatedName}
+              handleSubmit={handleUpdate}
+            />
+          </Modal>
           </div>
         </div>
       </div>

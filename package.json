@@ -43,6 +43,7 @@
     "@playwright/test": "^1.44.0",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.2.0",
+    "@testing-library/user-event": "^14.6.1",
     "@types/node": "^20.12.12",
     "babel-jest": "^29.7.0",
     "dotenv": "^16.4.7",

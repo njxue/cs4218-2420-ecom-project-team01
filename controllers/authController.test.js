@@ -81,6 +81,12 @@ describe("Auth Controllers", () => {
         }
     );
 
+    it("should return error if email format is invalid", async () => {
+        req.body.email = "invalid-email";
+        await registerController(req, res);
+        expect(res.send).toHaveBeenCalledWith({ message: "Email format is invalid" });
+    });
+
     it("should return error if user already exists", async () => {
       const req = {
         body: {

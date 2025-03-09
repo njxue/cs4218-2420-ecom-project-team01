@@ -3,12 +3,15 @@ import Layout from "./../components/Layout";
 import axios from "axios";
 import { useParams, useNavigate } from "react-router-dom";
 import "../styles/ProductDetailsStyles.css";
+import { useCart } from "../context/cart";
+import toast from "react-hot-toast";
 
 const ProductDetails = () => {
   const params = useParams();
   const navigate = useNavigate();
   const [product, setProduct] = useState({});
   const [relatedProducts, setRelatedProducts] = useState([]);
+  const [cart, setCart] = useCart();
 
   //initalp details
   useEffect(() => {
@@ -20,6 +23,11 @@ const ProductDetails = () => {
       const { data } = await axios.get(
         `/api/v1/product/get-product/${params.slug}`
       );
+      if (!data?.product) {
+        console.log("No product fetched");
+        toast.error("No product found");
+        return;
+      }
       setProduct(data?.product);
       getSimilarProduct(data?.product._id, data?.product.category._id);
     } catch (error) {
@@ -37,22 +45,31 @@ const ProductDetails = () => {
       console.log(error);
     }
   };
+
+  const handleAddToCart = async (product) => {
+    setCart([...cart, product]);
+    localStorage.setItem("cart", JSON.stringify([...cart, product]));
+    toast.success("Item Added to cart");
+  };
+
   return (
     <Layout>
       <div className="row container product-details">
         <div className="col-md-6">
-          <img
-            src={`/api/v1/product/product-photo/${product._id}`}
-            className="card-img-top"
-            alt={product.name}
-            height="300"
-            width={"350px"}
-          />
+          {product._id && (
+            <img
+              src={`/api/v1/product/product-photo/${product._id}`}
+              className="card-img-top"
+              alt={product.name}
+              height="300"
+              width={"350px"}
+            />
+          )}
         </div>
         <div className="col-md-6 product-details-info">
           <h1 className="text-center">Product Details</h1>
           <hr />
-          <h6>Name : {product.name}</h6>
+          <h6 data-testid="product-name">Name : {product.name}</h6>
           <h6>Description : {product.description}</h6>
           <h6>
             Price :
@@ -62,7 +79,12 @@ const ProductDetails = () => {
             })}
           </h6>
           <h6>Category : {product?.category?.name}</h6>
-          <button class="btn btn-secondary ms-1">ADD TO CART</button>
+          <button
+            data-testid="add-to-cart-main"
+            className="btn btn-secondary ms-1"
+            onClick={() => handleAddToCart(product)}>
+            ADD TO CART
+          </button>
         </div>
       </div>
       <hr />
@@ -73,7 +95,10 @@ const ProductDetails = () => {
         )}
         <div className="d-flex flex-wrap">
           {relatedProducts?.map((p) => (
-            <div className="card m-2" key={p._id}>
+            <div
+              className="card m-2"
+              key={p._id}
+              data-testid={`similar-product-${p._id}`}>
               <img
                 src={`/api/v1/product/product-photo/${p._id}`}
                 className="card-img-top"
@@ -94,24 +119,17 @@ const ProductDetails = () => {
                 </p>
                 <div className="card-name-price">
                   <button
+                    data-testid="more-details-button"
                     className="btn btn-info ms-1"
-                    onClick={() => navigate(`/product/${p.slug}`)}
-                  >
+                    onClick={() => navigate(`/product/${p.slug}`)}>
                     More Details
                   </button>
-                  {/* <button
-                  className="btn btn-dark ms-1"
-                  onClick={() => {
-                    setCart([...cart, p]);
-                    localStorage.setItem(
-                      "cart",
-                      JSON.stringify([...cart, p])
-                    );
-                    toast.success("Item Added to cart");
-                  }}
-                >
-                  ADD TO CART
-                </button> */}
+                  <button
+                    data-testid={`add-to-cart-${p._id}`}
+                    className="btn btn-dark ms-1"
+                    onClick={() => handleAddToCart(p)}>
+                    ADD TO CART
+                  </button>
                 </div>
               </div>
             </div>

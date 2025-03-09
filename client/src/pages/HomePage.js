@@ -6,7 +6,6 @@ import { useCart } from "../context/cart";
 import axios from "axios";
 import toast from "react-hot-toast";
 import Layout from "./../components/Layout";
-import { AiOutlineReload } from "react-icons/ai";
 import "../styles/Homepages.css";
 
 const HomePage = () => {
@@ -123,8 +122,7 @@ const HomePage = () => {
             {categories?.map((c) => (
               <Checkbox
                 key={c._id}
-                onChange={(e) => handleFilter(e.target.checked, c._id)}
-              >
+                onChange={(e) => handleFilter(e.target.checked, c._id)}>
                 {c.name}
               </Checkbox>
             ))}
@@ -143,8 +141,7 @@ const HomePage = () => {
           <div className="d-flex flex-column">
             <button
               className="btn btn-danger"
-              onClick={() => window.location.reload()}
-            >
+              onClick={() => window.location.reload()}>
               RESET FILTERS
             </button>
           </div>
@@ -175,8 +172,7 @@ const HomePage = () => {
                   <div className="card-name-price">
                     <button
                       className="btn btn-info ms-1"
-                      onClick={() => navigate(`/product/${p.slug}`)}
-                    >
+                      onClick={() => navigate(`/product/${p.slug}`)}>
                       More Details
                     </button>
                     <button
@@ -188,8 +184,7 @@ const HomePage = () => {
                           JSON.stringify([...cart, p])
                         );
                         toast.success("Item Added to cart");
-                      }}
-                    >
+                      }}>
                       ADD TO CART
                     </button>
                   </div>
@@ -204,16 +199,8 @@ const HomePage = () => {
                 onClick={(e) => {
                   e.preventDefault();
                   setPage(page + 1);
-                }}
-              >
-                {loading ? (
-                  "Loading ..."
-                ) : (
-                  <>
-                    {" "}
-                    Loadmore <AiOutlineReload />
-                  </>
-                )}
+                }}>
+                {loading ? "Loading ..." : <>Loadmore</>}
               </button>
             )}
           </div>

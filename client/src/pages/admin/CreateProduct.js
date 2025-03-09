@@ -24,10 +24,13 @@ const CreateProduct = () => {
       const { data } = await axios.get("/api/v1/category/get-category");
       if (data?.success) {
         setCategories(data?.category);
+      } else {
+        console.log(data.message);
+        toast.error(data.message);
       }
     } catch (error) {
       console.log(error);
-      toast.error("Something wwent wrong in getting catgeory");
+      toast.error("Something went wrong in getting catgeory");
     }
   };
 
@@ -35,9 +38,36 @@ const CreateProduct = () => {
     getAllCategory();
   }, []);
 
+  const validate = () => {
+    if (
+      !name?.trim() ||
+      !description?.trim() ||
+      !category ||
+      shipping === "" ||
+      price === "" ||
+      quantity === "" ||
+      photo === ""
+    ) {
+      toast.error("You have some missing fields");
+      return false;
+    }
+    if (price < 0) {
+      toast.error("Price cannot be negative");
+      return false;
+    }
+    if (quantity < 0) {
+      toast.error("Quantity cannot be negative");
+      return false;
+    }
+    return true;
+  };
+
   //create product function
   const handleCreate = async (e) => {
     e.preventDefault();
+    if (!validate()) {
+      return;
+    }
     try {
       const productData = new FormData();
       productData.append("name", name);
@@ -46,11 +76,14 @@ const CreateProduct = () => {
       productData.append("quantity", quantity);
       productData.append("photo", photo);
       productData.append("category", category);
-      const { data } = axios.post(
+      productData.append("shipping", shipping);
+
+      const { data } = await axios.post(
         "/api/v1/product/create-product",
         productData
       );
-      if (data?.success) {
+
+      if (!data?.success) {
         toast.error(data?.message);
       } else {
         toast.success("Product Created Successfully");
@@ -71,17 +104,19 @@ const CreateProduct = () => {
           </div>
           <div className="col-md-9">
             <h1>Create Product</h1>
+
             <div className="m-1 w-75">
               <Select
-                bordered={false}
+                data-testid="select-category"
+                variant={false}
                 placeholder="Select a category"
                 size="large"
                 showSearch
                 className="form-select mb-3"
                 onChange={(value) => {
                   setCategory(value);
-                }}
-              >
+                }}>
+                <Option value="" hidden></Option>
                 {categories?.map((c) => (
                   <Option key={c._id} value={c._id}>
                     {c.name}
@@ -97,6 +132,7 @@ const CreateProduct = () => {
                     accept="image/*"
                     onChange={(e) => setPhoto(e.target.files[0])}
                     hidden
+                    data-testid="photo-input"
                   />
                 </label>
               </div>
@@ -151,15 +187,16 @@ const CreateProduct = () => {
               </div>
               <div className="mb-3">
                 <Select
-                  bordered={false}
-                  placeholder="Select Shipping "
+                  data-testid="select-shipping"
+                  variant={false}
+                  placeholder="Select Shipping"
                   size="large"
                   showSearch
                   className="form-select mb-3"
                   onChange={(value) => {
                     setShipping(value);
-                  }}
-                >
+                  }}>
+                  <Option value="" hidden></Option>
                   <Option value="0">No</Option>
                   <Option value="1">Yes</Option>
                 </Select>

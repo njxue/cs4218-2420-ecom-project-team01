@@ -114,6 +114,27 @@ describe("Auth Controllers", () => {
         message: "Already Registered. Please login"
       });
     });
+
+    it("should handle errors correctly", async () => {
+        req.body = {
+            name: "John Doe",
+            email: "john@example.com",
+            password: "password123",
+            phone: "12345678",
+            address: "123 Street",
+            answer: "Swimming",
+        };
+
+        userModel.findOne = jest.fn().mockRejectedValue(new Error("Database error"));
+
+        await registerController(req, res);
+
+        expect(res.status).toHaveBeenCalledWith(500);
+        expect(res.send).toHaveBeenCalledWith({
+        success: false,
+        message: "Error in Registration",
+        error: new Error("Database error"),});
+    });
   });
 
   describe("loginController", () => {
@@ -177,6 +198,22 @@ describe("Auth Controllers", () => {
       });
     });
 
+    it("should return 404 if email or password is missing", async () => {
+        const req = {
+            body: { 
+                email: "", 
+                password: "" 
+            }
+        };
+        const res = {
+            status: jest.fn().mockReturnThis(),
+            send: jest.fn()
+          };
+        await loginController(req, res);
+        expect(res.status).toHaveBeenCalledWith(404);
+        expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ success: false, message: "Invalid email or password" }));
+    });
+
     it("should return error if password is incorrect", async () => {
       const req = {
         body: {
@@ -205,6 +242,30 @@ describe("Auth Controllers", () => {
         success: false,
         message: "Invalid Password"
       });
+    });
+
+    it("should handle errors correctly", async () => {
+        const req = {
+            body: {
+              email: "test@example.com",
+              password: "wrongPassword"
+            }
+          };
+          
+          const res = {
+            status: jest.fn().mockReturnThis(),
+            send: jest.fn()
+          };
+        userModel.findOne.mockRejectedValue(new Error("Database error"));
+
+        await loginController(req, res);
+
+        expect(res.status).toHaveBeenCalledWith(500);
+        expect(res.send).toHaveBeenCalledWith({
+        success: false,
+        message: "Error in login",
+        error: new Error("Database error"),
+        });
     });
   });
 
@@ -286,6 +347,31 @@ describe("Auth Controllers", () => {
         message: "Email is required"
       });
     });
+
+    it("should handle errors correctly", async () => {
+        const req = {
+            body: {
+              email: "test@example.com",
+              answer: "Swimming",
+              newPassword: "newPassword123"
+            }
+          };
+          
+          const res = {
+            status: jest.fn().mockReturnThis(),
+            send: jest.fn()
+          };
+        userModel.findOne.mockRejectedValue(new Error("Database error"));
+
+        await forgotPasswordController(req, res);
+
+        expect(res.status).toHaveBeenCalledWith(500);
+        expect(res.send).toHaveBeenCalledWith({
+        success: false,
+        message: "Something went wrong",
+        error: new Error("Database error"),
+        });
+    });
   });
 
   describe("testController", () => {
@@ -298,6 +384,19 @@ describe("Auth Controllers", () => {
       testController(req, res);
 
       expect(res.send).toHaveBeenCalledWith("Protected Routes");
+    });
+
+    it("should handle errors correctly", async () => {
+        const req = {};
+        const res = {
+            send: jest.fn()
+        };
+        const error = new Error("Unexpected Error");
+        res.send.mockImplementationOnce(() => { throw error; });
+
+        testController(req, res);
+
+        expect(res.send).toHaveBeenCalledWith({ error });
     });
   });
 });

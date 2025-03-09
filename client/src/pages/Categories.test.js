@@ -29,19 +29,14 @@ jest.mock('../context/search', () => ({
         </MemoryRouter>
       );
   
-      // 1) Check the layout title
       expect(getByText("All Categories")).toBeInTheDocument();
   
-      // 2) Because "Category 1" appears in the navbar and the main content,
-      // let's just ensure we find BOTH instances.
       const cat1Elements = getAllByText("Category 1");
       expect(cat1Elements).toHaveLength(2);
   
       const cat2Elements = getAllByText("Category 2");
       expect(cat2Elements).toHaveLength(2);
-  
-      // If you want to specifically check the main body,
-      // you could do something like:
+
       const main = container.querySelector("main");
       const cat1InMain = within(main).getByText("Category 1");
       const cat2InMain = within(main).getByText("Category 2");

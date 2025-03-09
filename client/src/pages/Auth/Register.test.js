@@ -40,58 +40,72 @@ window.matchMedia = window.matchMedia || function() {
   };
       
 
-describe('Register Component', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
+  describe('Register Component', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+  
+    const fillForm = (getByPlaceholderText) => {
+      fireEvent.change(getByPlaceholderText('Enter Your Name'), { target: { value: 'John Doe' } });
+      fireEvent.change(getByPlaceholderText('Enter Your Email'), { target: { value: 'test@example.com' } });
+      fireEvent.change(getByPlaceholderText('Enter Your Password'), { target: { value: 'password123' } });
+      fireEvent.change(getByPlaceholderText('Enter Your Phone'), { target: { value: '1234567890' } });
+      fireEvent.change(getByPlaceholderText('Enter Your Address'), { target: { value: '123 Street' } });
+      fireEvent.change(getByPlaceholderText('Enter Your DOB'), { target: { value: '2000-01-01' } });
+      fireEvent.change(getByPlaceholderText('What is Your Favorite sports'), { target: { value: 'Football' } });
+    };
+  
+    it('should register the user successfully', async () => {
+      axios.post.mockResolvedValueOnce({ data: { success: true, message: 'Register Successfully, please login' } });
+  
+      const { getByText, getByPlaceholderText } = render(
+          <MemoryRouter initialEntries={['/register']}>
+            <Routes>
+              <Route path="/register" element={<Register />} />
+            </Routes>
+          </MemoryRouter>
+        );
+  
+      fillForm(getByPlaceholderText);
+      fireEvent.click(getByText('REGISTER'));
+  
+      await waitFor(() => expect(axios.post).toHaveBeenCalled());
+      expect(toast.success).toHaveBeenCalledWith('Register Successfully, please login');
+    });
+  
+    it('should display error message when registration fails with a response message', async () => {
+      axios.post.mockResolvedValueOnce({ data: { success: false, message: 'User already exists' } });
+  
+      const { getByText, getByPlaceholderText } = render(
+          <MemoryRouter initialEntries={['/register']}>
+            <Routes>
+              <Route path="/register" element={<Register />} />
+            </Routes>
+          </MemoryRouter>
+        );
+  
+      fillForm(getByPlaceholderText);
+      fireEvent.click(getByText('REGISTER'));
+  
+      await waitFor(() => expect(axios.post).toHaveBeenCalled());
+      expect(toast.error).toHaveBeenCalledWith('User already exists');
+    });
+  
+    it('should display generic error message when registration request fails', async () => {
+      axios.post.mockRejectedValueOnce(new Error('Network Error'));
+  
+      const { getByText, getByPlaceholderText } = render(
+          <MemoryRouter initialEntries={['/register']}>
+            <Routes>
+              <Route path="/register" element={<Register />} />
+            </Routes>
+          </MemoryRouter>
+        );
+  
+      fillForm(getByPlaceholderText);
+      fireEvent.click(getByText('REGISTER'));
+  
+      await waitFor(() => expect(axios.post).toHaveBeenCalled());
+      expect(toast.error).toHaveBeenCalledWith('Something went wrong');
+    });
   });
-
-  it('should register the user successfully', async () => {
-    axios.post.mockResolvedValueOnce({ data: { success: true } });
-
-    const { getByText, getByPlaceholderText } = render(
-        <MemoryRouter initialEntries={['/register']}>
-          <Routes>
-            <Route path="/register" element={<Register />} />
-          </Routes>
-        </MemoryRouter>
-      );
-
-    fireEvent.change(getByPlaceholderText('Enter Your Name'), { target: { value: 'John Doe' } });
-    fireEvent.change(getByPlaceholderText('Enter Your Email'), { target: { value: 'test@example.com' } });
-    fireEvent.change(getByPlaceholderText('Enter Your Password'), { target: { value: 'password123' } });
-    fireEvent.change(getByPlaceholderText('Enter Your Phone'), { target: { value: '1234567890' } });
-    fireEvent.change(getByPlaceholderText('Enter Your Address'), { target: { value: '123 Street' } });
-    fireEvent.change(getByPlaceholderText('Enter Your DOB'), { target: { value: '2000-01-01' } });
-    fireEvent.change(getByPlaceholderText('What is Your Favorite sports'), { target: { value: 'Football' } });
-
-    fireEvent.click(getByText('REGISTER'));
-
-    await waitFor(() => expect(axios.post).toHaveBeenCalled());
-    expect(toast.success).toHaveBeenCalledWith('Register Successfully, please login');
-  });
-
-  it('should display error message on failed registration', async () => {
-    axios.post.mockRejectedValueOnce({ message: 'User already exists' });
-
-    const { getByText, getByPlaceholderText } = render(
-        <MemoryRouter initialEntries={['/register']}>
-          <Routes>
-            <Route path="/register" element={<Register />} />
-          </Routes>
-        </MemoryRouter>
-      );
-
-    fireEvent.change(getByPlaceholderText('Enter Your Name'), { target: { value: 'John Doe' } });
-    fireEvent.change(getByPlaceholderText('Enter Your Email'), { target: { value: 'test@example.com' } });
-    fireEvent.change(getByPlaceholderText('Enter Your Password'), { target: { value: 'password123' } });
-    fireEvent.change(getByPlaceholderText('Enter Your Phone'), { target: { value: '1234567890' } });
-    fireEvent.change(getByPlaceholderText('Enter Your Address'), { target: { value: '123 Street' } });
-    fireEvent.change(getByPlaceholderText('Enter Your DOB'), { target: { value: '2000-01-01' } });
-    fireEvent.change(getByPlaceholderText('What is Your Favorite sports'), { target: { value: 'Football' } });
-
-    fireEvent.click(getByText('REGISTER'));
-
-    await waitFor(() => expect(axios.post).toHaveBeenCalled());
-    expect(toast.error).toHaveBeenCalledWith('Something went wrong');
-  });
-});

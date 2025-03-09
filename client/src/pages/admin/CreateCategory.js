@@ -33,9 +33,12 @@ const CreateCategory = () => {
   //get all cat
   const getAllCategory = async () => {
     try {
-      const { data } = await axios.get("/api/v1/category/get-category");
-      if (data.success) {
-        setCategories(data.category);
+      const response = await axios.get("/api/v1/category/get-category");
+      if (response) {
+        const { data } = response;
+        if (data.success) {
+          setCategories(data.category);
+        }
       }
     } catch (error) {
       console.log(error);
@@ -111,9 +114,8 @@ const CreateCategory = () => {
                 </thead>
                 <tbody>
                   {categories?.map((c) => (
-                    <>
-                      <tr>
-                        <td key={c._id}>{c.name}</td>
+                      <tr key={c._id}>
+                        <td>{c.name}</td>
                         <td>
                           <button
                             className="btn btn-primary ms-2"
@@ -135,22 +137,18 @@ const CreateCategory = () => {
                           </button>
                         </td>
                       </tr>
-                    </>
                   ))}
                 </tbody>
               </table>
             </div>
-            <Modal
-              onCancel={() => setVisible(false)}
-              footer={null}
-              visible={visible}
-            >
-              <CategoryForm
-                value={updatedName}
-                setValue={setUpdatedName}
-                handleSubmit={handleUpdate}
-              />
-            </Modal>
+            <Modal onCancel={() => setVisible(false)} footer={null} open={visible}>
+            <CategoryForm
+              data-testid="modal-category-form"
+              value={updatedName}
+              setValue={setUpdatedName}
+              handleSubmit={handleUpdate}
+            />
+          </Modal>
           </div>
         </div>
       </div>

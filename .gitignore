@@ -7,5 +7,4 @@ node_modules
 /.scannerwork/
 sonar-project.properties
 .env
-.env.example
 .DS_Store

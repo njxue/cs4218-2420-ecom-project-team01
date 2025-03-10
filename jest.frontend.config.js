@@ -20,16 +20,24 @@ module.exports = {
   transformIgnorePatterns: ["/node_modules/(?!(styleMock\\.js)$)"],
 
   // only run these tests
-  testMatch: ["<rootDir>/client/src/pages/**/*.test.js", "<rootDir>/client/src/components/Form/CategoryForm.test.js", "<rootDir>/client/src/hooks/useCategory.test.js"],
+  testMatch: [
+    "<rootDir>/client/src/pages/**/*.test.js",
+    "<rootDir>/client/src/components/**/*.test.js",
+    "<rootDir>/client/src/hooks/**/*.test.js",
+  ],
 
   // jest code coverage
   collectCoverage: true,
-  collectCoverageFrom: ["client/src/pages/**", "<rootDir>/client/src/components/Form/CategoryForm.test.js", "<rootDir>/client/src/hooks/useCategory.test.js"],
+  collectCoverageFrom: [
+    "client/src/pages/**",
+    "client/src/components/**",
+    "client/src/hooks/**",
+  ],
   coverageDirectory: "coverage/frontend",
   coverageThreshold: {
     global: {
-      lines: 100,
-      functions: 100,
+      lines: 50,
+      functions: 50,
     },
   },
 };

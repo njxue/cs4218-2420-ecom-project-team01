@@ -9,6 +9,7 @@ module.exports = {
   testMatch: [
     "<rootDir>/controllers/*.test.js",
     "<rootDir>/helpers/*.test.js",
+    "<rootDir>/middlewares/*.test.js",
   ],
 
   // jest code coverage
@@ -16,6 +17,7 @@ module.exports = {
   collectCoverageFrom: [
     "controllers/**",
     "helpers/**",
+    "middlewares/**",
   ],
   coverageDirectory: "coverage/backend",
   coverageThreshold: {

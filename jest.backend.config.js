@@ -10,6 +10,7 @@ module.exports = {
     "<rootDir>/controllers/*.test.js",
     "<rootDir>/helpers/*.test.js",
     "<rootDir>/middlewares/*.test.js",
+    "<rootDir>/models/*.test.js",
   ],
 
   // jest code coverage
@@ -18,6 +19,7 @@ module.exports = {
     "controllers/**",
     "helpers/**",
     "middlewares/**",
+    "models/**",
   ],
   coverageDirectory: "coverage/backend",
   coverageThreshold: {

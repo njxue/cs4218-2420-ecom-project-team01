@@ -24,6 +24,7 @@ module.exports = {
     "<rootDir>/client/src/pages/**/*.test.js",
     "<rootDir>/client/src/components/**/*.test.js",
     "<rootDir>/client/src/hooks/**/*.test.js",
+    "<rootDir>/client/src/context/**/*.test.js",
   ],
 
   // jest code coverage
@@ -32,6 +33,7 @@ module.exports = {
     "client/src/pages/**",
     "client/src/components/**",
     "client/src/hooks/**",
+    "client/src/context/**",
   ],
   coverageDirectory: "coverage/frontend",
   coverageThreshold: {

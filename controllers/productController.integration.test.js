@@ -35,10 +35,6 @@ afterAll(async () => {
 
 afterEach(async () => {
   jest.restoreAllMocks();
-  const productCollection = mongoose.connection.collections.products;
-  if (productCollection) {
-    await productCollection.deleteMany();
-  }
 });
 
 const getTestProduct = () => ({
@@ -66,8 +62,21 @@ const getTestProducts = () => [
   },
 ];
 
+// Creates a test product and save it in the (test) database
+const createAndSaveTestProduct = async () => {
+  return await productModel.create(getTestProduct());
+};
+
+// Erase entire products collection after each test
+const restoreProductsCollection = async () => {
+  const productCollection = mongoose.connection.collections.products;
+  if (productCollection) {
+    await productCollection.deleteMany();
+  }
+};
+
 describe("Protected Endpoints Tests", () => {
-  let token, testProduct;
+  let token;
 
   // Sign in as admin
   beforeAll(async () => {
@@ -90,30 +99,26 @@ describe("Protected Endpoints Tests", () => {
     );
   });
 
-  beforeEach(() => {
-    testProduct = getTestProduct();
+  afterEach(async () => {
+    await restoreProductsCollection();
   });
 
   describe("Create Product Controller Test", () => {
-    let sendRequest;
-
-    beforeEach(() => {
-      sendRequest = async () => {
-        return await request(app)
-          .post("/api/v1/product/create-product")
-          .set("Authorization", `Bearer ${token}`)
-          .field("name", testProduct.name)
-          .field("description", testProduct.description)
-          .field("price", testProduct.price)
-          .field("category", testProduct.category)
-          .field("quantity", testProduct.quantity)
-          .field("shipping", testProduct.shipping)
-          .attach("photo", testProduct.photo);
-      };
-    });
+    const ENDPOINT_CREATE_PRODUCT = "/api/v1/product/create-product";
 
     test("should save the product to database", async () => {
-      const response = await sendRequest();
+      const testProduct = getTestProduct();
+      const response = await request(app)
+        .post(ENDPOINT_CREATE_PRODUCT)
+        .set("Authorization", `Bearer ${token}`)
+        .field("name", testProduct.name)
+        .field("description", testProduct.description)
+        .field("price", testProduct.price)
+        .field("category", testProduct.category)
+        .field("quantity", testProduct.quantity)
+        .field("shipping", testProduct.shipping)
+        .attach("photo", testProduct.photo);
+
       const product = await productModel.findOne({ name: testProduct.name });
 
       expect(product).toBeDefined();
@@ -133,21 +138,29 @@ describe("Protected Endpoints Tests", () => {
         .spyOn(productModel.prototype, "save")
         .mockRejectedValue(new Error("Database error"));
       jest.spyOn(console, "log").mockImplementationOnce(jest.fn());
+      const testProduct = getTestProduct();
 
-      const response = await sendRequest();
+      const response = await request(app)
+        .post(ENDPOINT_CREATE_PRODUCT)
+        .set("Authorization", `Bearer ${token}`)
+        .field("name", testProduct.name)
+        .field("description", testProduct.description)
+        .field("price", testProduct.price)
+        .field("category", testProduct.category)
+        .field("quantity", testProduct.quantity)
+        .field("shipping", testProduct.shipping)
+        .attach("photo", testProduct.photo);
 
       expect(response.status).toBe(500);
     });
   });
 
   describe("Update Product Controller Test", () => {
-    let updatedProduct, sendRequest, productId;
+    let updatedProduct, existingProduct;
+    const ENDPOINT_UPDATE_PRODUCT = "/api/v1/product/update-product";
 
-    beforeAll(async () => {
-      const existingProduct = await productModel.create(testProduct);
-      productId = existingProduct._id.toString();
-    });
-    beforeEach(() => {
+    beforeEach(async () => {
+      existingProduct = await createAndSaveTestProduct();
       updatedProduct = {
         name: "Updated product name",
         description: "Updated product description",
@@ -156,22 +169,20 @@ describe("Protected Endpoints Tests", () => {
         shipping: false,
         category: new mongoose.Types.ObjectId().toString(),
       };
-      sendRequest = async () => {
-        return await request(app)
-          .put(`/api/v1/product/update-product/${productId}`)
-          .set("Authorization", `Bearer ${token}`)
-          .field("name", updatedProduct.name)
-          .field("description", updatedProduct.description)
-          .field("price", updatedProduct.price)
-          .field("quantity", updatedProduct.quantity)
-          .field("shipping", updatedProduct.shipping)
-          .field("category", updatedProduct.category);
-      };
     });
 
     test("should update the product in the database", async () => {
-      const response = await sendRequest();
-      const product = await productModel.findOne({ _id: productId });
+      const response = await request(app)
+        .put(`${ENDPOINT_UPDATE_PRODUCT}/${existingProduct.id}`)
+        .set("Authorization", `Bearer ${token}`)
+        .field("name", updatedProduct.name)
+        .field("description", updatedProduct.description)
+        .field("price", updatedProduct.price)
+        .field("quantity", updatedProduct.quantity)
+        .field("shipping", updatedProduct.shipping)
+        .field("category", updatedProduct.category);
+
+      const product = await productModel.findOne({ _id: existingProduct.id });
 
       expect(product).toBeDefined();
       expect(product.name).toBe(updatedProduct.name);
@@ -189,24 +200,31 @@ describe("Protected Endpoints Tests", () => {
         .mockRejectedValue(new Error("Database error"));
       jest.spyOn(console, "log").mockImplementationOnce(jest.fn());
 
-      const response = await sendRequest();
+      const response = await request(app)
+        .put(`${ENDPOINT_UPDATE_PRODUCT}/${existingProduct.id}`)
+        .set("Authorization", `Bearer ${token}`)
+        .field("name", updatedProduct.name)
+        .field("description", updatedProduct.description)
+        .field("price", updatedProduct.price)
+        .field("quantity", updatedProduct.quantity)
+        .field("shipping", updatedProduct.shipping)
+        .field("category", updatedProduct.category);
 
       expect(response.status).toBe(500);
     });
   });
 
   describe("Delete Product Controller Test", () => {
-    let productId;
-    const DELETE_PRODUCT_ENDPOINT = "/api/v1/product/delete-product";
+    let existingProduct;
+    const ENDPOINT_DELETE_PRODUCT = "/api/v1/product/delete-product";
 
-    beforeAll(async () => {
-      const existingProduct = await productModel.create(testProduct);
-      productId = existingProduct._id.toString();
+    beforeEach(async () => {
+      existingProduct = await createAndSaveTestProduct();
     });
 
     test("should delete product from database", async () => {
       const response = await request(app)
-        .delete(`${DELETE_PRODUCT_ENDPOINT}/${productId}`)
+        .delete(`${ENDPOINT_DELETE_PRODUCT}/${existingProduct.id}`)
         .set("Authorization", `Bearer ${token}`);
 
       expect(response.status).toBe(200);
@@ -219,7 +237,7 @@ describe("Protected Endpoints Tests", () => {
       jest.spyOn(console, "log").mockImplementationOnce(jest.fn());
 
       const response = await request(app)
-        .delete(`${DELETE_PRODUCT_ENDPOINT}/${productId}`)
+        .delete(`${ENDPOINT_DELETE_PRODUCT}/${existingProduct.id}`)
         .set("Authorization", `Bearer ${token}`);
 
       expect(response.status).toBe(500);
@@ -229,25 +247,29 @@ describe("Protected Endpoints Tests", () => {
 
 describe("Public Endpoints Tests", () => {
   describe("Get Single Product Controller Test", () => {
-    let testProduct;
-    const GET_PRODUCT_ENDPOINT = "/api/v1/product/get-product";
+    let existingProduct;
+    const ENDPOINT_GET_PRODUCT = "/api/v1/product/get-product";
 
     beforeAll(async () => {
-      testProduct = await productModel.create(getTestProduct());
+      existingProduct = await createAndSaveTestProduct();
+    });
+
+    afterAll(async () => {
+      await restoreProductsCollection();
     });
 
     test("should fetch product", async () => {
       const response = await request(app).get(
-        `${GET_PRODUCT_ENDPOINT}/${testProduct.slug}`
+        `${ENDPOINT_GET_PRODUCT}/${existingProduct.slug}`
       );
 
       expect(response.status).toBe(200);
-      expect(response.body.product._id).toBe(testProduct._id.toString());
+      expect(response.body.product._id).toBe(existingProduct.id);
     });
 
     test("should return 404 error when product is not found", async () => {
       const response = await request(app).get(
-        `${GET_PRODUCT_ENDPOINT}/non-existent-slug`
+        `${ENDPOINT_GET_PRODUCT}/non-existent-slug`
       );
 
       expect(response.status).toBe(404);
@@ -260,7 +282,7 @@ describe("Public Endpoints Tests", () => {
       jest.spyOn(console, "log").mockImplementationOnce(jest.fn());
 
       const response = await request(app).get(
-        `${GET_PRODUCT_ENDPOINT}/${testProduct.slug}`
+        `${ENDPOINT_GET_PRODUCT}/${existingProduct.slug}`
       );
 
       expect(response.status).toBe(500);
@@ -269,7 +291,7 @@ describe("Public Endpoints Tests", () => {
 
   describe("Get Products Controller Test", () => {
     let testProducts;
-    const GET_PRODUCTS_ENDPOINT = "/api/v1/product/get-product";
+    const ENDPOINT_GET_PRODUCTS = "/api/v1/product/get-product";
 
     beforeAll(async () => {
       testProducts = await Promise.all([
@@ -278,11 +300,15 @@ describe("Public Endpoints Tests", () => {
       ]);
     });
 
+    afterAll(async () => {
+      await restoreProductsCollection();
+    });
+
     test("should fetch products", async () => {
-      const response = await request(app).get(GET_PRODUCTS_ENDPOINT);
+      const response = await request(app).get(ENDPOINT_GET_PRODUCTS);
 
       const receivedIds = response.body.products.map((p) => p._id);
-      const expectedIds = testProducts.map((p) => p._id.toString());
+      const expectedIds = testProducts.map((p) => p.id);
 
       expect(response.status).toBe(200);
       expect(response.body.products.length).toBe(testProducts.length);
@@ -295,7 +321,7 @@ describe("Public Endpoints Tests", () => {
       });
       jest.spyOn(console, "log").mockImplementationOnce(jest.fn());
 
-      const response = await request(app).get(GET_PRODUCTS_ENDPOINT);
+      const response = await request(app).get(ENDPOINT_GET_PRODUCTS);
 
       expect(response.status).toBe(500);
     });

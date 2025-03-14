@@ -194,6 +194,37 @@ describe("Protected Endpoints Tests", () => {
       expect(response.status).toBe(500);
     });
   });
+
+  describe("Delete Product Controller Test", () => {
+    let productId;
+    const DELETE_PRODUCT_ENDPOINT = "/api/v1/product/delete-product";
+
+    beforeAll(async () => {
+      const existingProduct = await productModel.create(testProduct);
+      productId = existingProduct._id.toString();
+    });
+
+    test("should delete product from database", async () => {
+      const response = await request(app)
+        .delete(`${DELETE_PRODUCT_ENDPOINT}/${productId}`)
+        .set("Authorization", `Bearer ${token}`);
+
+      expect(response.status).toBe(200);
+    });
+
+    test("should return error when there is database error", async () => {
+      jest.spyOn(productModel, "findByIdAndDelete").mockImplementation(() => {
+        throw new Error("Database error");
+      });
+      jest.spyOn(console, "log").mockImplementationOnce(jest.fn());
+
+      const response = await request(app)
+        .delete(`${DELETE_PRODUCT_ENDPOINT}/${productId}`)
+        .set("Authorization", `Bearer ${token}`);
+
+      expect(response.status).toBe(500);
+    });
+  });
 });
 
 describe("Public Endpoints Tests", () => {

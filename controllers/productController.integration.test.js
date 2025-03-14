@@ -52,7 +52,21 @@ const getTestProduct = () => ({
   slug: "test-product",
 });
 
-describe("Protected Endpoint Tests", () => {
+const getTestProducts = () => [
+  getTestProduct(),
+  {
+    name: "Another test product",
+    description: "Another test product description",
+    price: 199,
+    category: new mongoose.Types.ObjectId().toString(),
+    quantity: 119,
+    shipping: false,
+    photo: path.resolve("__tests__/assets/test-small.jpg"),
+    slug: "another-test-product",
+  },
+];
+
+describe("Protected Endpoints Tests", () => {
   let token, testProduct;
 
   // Sign in as admin
@@ -176,6 +190,81 @@ describe("Protected Endpoint Tests", () => {
       jest.spyOn(console, "log").mockImplementationOnce(jest.fn());
 
       const response = await sendRequest();
+
+      expect(response.status).toBe(500);
+    });
+  });
+});
+
+describe("Public Endpoints Tests", () => {
+  describe("Get Single Product Controller Test", () => {
+    let testProduct;
+    const GET_PRODUCT_ENDPOINT = "/api/v1/product/get-product";
+
+    beforeAll(async () => {
+      testProduct = await productModel.create(getTestProduct());
+    });
+
+    test("should fetch product", async () => {
+      const response = await request(app).get(
+        `${GET_PRODUCT_ENDPOINT}/${testProduct.slug}`
+      );
+
+      expect(response.status).toBe(200);
+      expect(response.body.product._id).toBe(testProduct._id.toString());
+    });
+
+    test("should return 404 error when product is not found", async () => {
+      const response = await request(app).get(
+        `${GET_PRODUCT_ENDPOINT}/non-existent-slug`
+      );
+
+      expect(response.status).toBe(404);
+    });
+
+    test("should return error when there is database error", async () => {
+      jest.spyOn(productModel, "findOne").mockImplementation(() => {
+        throw new Error("Database error");
+      });
+      jest.spyOn(console, "log").mockImplementationOnce(jest.fn());
+
+      const response = await request(app).get(
+        `${GET_PRODUCT_ENDPOINT}/${testProduct.slug}`
+      );
+
+      expect(response.status).toBe(500);
+    });
+  });
+
+  describe("Get Products Controller Test", () => {
+    let testProducts;
+    const GET_PRODUCTS_ENDPOINT = "/api/v1/product/get-product";
+
+    beforeAll(async () => {
+      testProducts = await Promise.all([
+        productModel.create(getTestProducts()[0]),
+        productModel.create(getTestProducts()[1]),
+      ]);
+    });
+
+    test("should fetch products", async () => {
+      const response = await request(app).get(GET_PRODUCTS_ENDPOINT);
+
+      const receivedIds = response.body.products.map((p) => p._id);
+      const expectedIds = testProducts.map((p) => p._id.toString());
+
+      expect(response.status).toBe(200);
+      expect(response.body.products.length).toBe(testProducts.length);
+      expect(receivedIds).toEqual(expect.arrayContaining(expectedIds));
+    });
+
+    test("should return error when there is database error", async () => {
+      jest.spyOn(productModel, "find").mockImplementation(() => {
+        throw new Error("Database error");
+      });
+      jest.spyOn(console, "log").mockImplementationOnce(jest.fn());
+
+      const response = await request(app).get(GET_PRODUCTS_ENDPOINT);
 
       expect(response.status).toBe(500);
     });

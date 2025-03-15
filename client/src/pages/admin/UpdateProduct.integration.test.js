@@ -196,4 +196,24 @@ describe("Update Product Component", () => {
       expect(screen.getByText(/all products list/i)).toBeInTheDocument();
     });
   });
+
+  test("should delete product successfully and navigate to products list", async () => {
+    window.prompt = jest.fn().mockReturnValue("answer");
+    axios.delete.mockResolvedValueOnce({ data: { success: true } });
+
+    renderPage();
+    await waitForEffect();
+    userEvent.click(
+      screen.getByRole("button", {
+        name: /delete product/i,
+      })
+    );
+
+    await waitFor(() => {
+      expect(toast.success).toHaveBeenCalledWith(
+        "Product Deleted Successfully"
+      );
+      expect(screen.getByText(/all products list/i)).toBeInTheDocument();
+    });
+  });
 });

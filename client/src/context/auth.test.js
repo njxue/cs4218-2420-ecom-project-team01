@@ -26,14 +26,12 @@ const TestComponent = () => {
         data-testid="login-button"
         onClick={() =>
           setAuth({ user: { name: "New User" }, token: "new-token" })
-        }
-      >
+        }>
         Login
       </button>
       <button
         data-testid="logout-button"
-        onClick={() => setAuth({ user: null, token: "" })}
-      >
+        onClick={() => setAuth({ user: null, token: "" })}>
         Logout
       </button>
     </div>
@@ -62,7 +60,7 @@ describe("Auth Context", () => {
     expect(getByTestId("auth-token").textContent).toBe("no-token");
     expect(getByTestId("user-name").textContent).toBe("no-user");
     expect(mockLocalStorage.getItem).toHaveBeenCalledWith("auth");
-    expect(axios.defaults.headers.common["Authorization"]).toBe("");
+    expect(axios.defaults.headers.common["Authorization"]).toBeUndefined();
   });
 
   test("loads auth data from localStorage on mount", () => {
@@ -84,7 +82,9 @@ describe("Auth Context", () => {
     expect(mockLocalStorage.getItem).toHaveBeenCalledWith("auth");
     expect(getByTestId("auth-token").textContent).toBe("test-token");
     expect(getByTestId("user-name").textContent).toBe("Test User");
-    expect(axios.defaults.headers.common["Authorization"]).toBe("test-token");
+    expect(axios.defaults.headers.common["Authorization"]).toBe(
+      "Bearer test-token"
+    );
   });
 
   test("handles invalid JSON in localStorage gracefully", () => {
@@ -129,7 +129,9 @@ describe("Auth Context", () => {
     // Assert
     expect(getByTestId("auth-token").textContent).toBe("new-token");
     expect(getByTestId("user-name").textContent).toBe("New User");
-    expect(axios.defaults.headers.common["Authorization"]).toBe("new-token");
+    expect(axios.defaults.headers.common["Authorization"]).toBe(
+      "Bearer new-token"
+    );
   });
 
   test("allows clearing auth state (logout)", () => {
@@ -157,7 +159,7 @@ describe("Auth Context", () => {
     // Assert
     expect(getByTestId("auth-token").textContent).toBe("no-token");
     expect(getByTestId("user-name").textContent).toBe("no-user");
-    expect(axios.defaults.headers.common["Authorization"]).toBe("");
+    expect(axios.defaults.headers.common["Authorization"]).toBeUndefined();
   });
 
   test("useAuth hook provides access to both auth state and setAuth function", () => {

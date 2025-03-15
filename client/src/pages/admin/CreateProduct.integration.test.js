@@ -93,8 +93,17 @@ describe("Create Product Component", () => {
         type: "image/jpg",
       }),
     };
-    axios.get.mockResolvedValue({
-      data: { success: true, category: mockCategories },
+    axios.get.mockImplementation((url) => {
+      switch (url) {
+        case "/api/v1/category/get-category":
+          return Promise.resolve({
+            data: { success: true, category: mockCategories },
+          });
+        case `/api/v1/product/get-product`:
+          return Promise.resolve({
+            data: { products: [] },
+          });
+      }
     });
 
     waitForEffect = async () =>

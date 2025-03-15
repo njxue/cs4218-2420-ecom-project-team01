@@ -60,10 +60,10 @@ describe("Update Product Component", () => {
         <SearchProvider>
           <CartProvider>
             <MemoryRouter
-              initialEntries={[`/dashboard/admin/update-product/${TEST_SLUG}`]}>
+              initialEntries={[`/dashboard/admin/product/${TEST_SLUG}`]}>
               <Routes>
                 <Route
-                  path="/dashboard/admin/update-product/:slug"
+                  path="/dashboard/admin/product/:slug"
                   element={<UpdateProduct />}
                 />
                 <Route

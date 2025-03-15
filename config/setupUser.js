@@ -8,6 +8,7 @@ const MONGO_URL = process.env.MONGO_URL;
 const USERS_COLLECTION = "users";
 
 const adminUser = {
+  name: "cs4218 admin",
   email: "cs4218@test.com",
   password: "cs4218@test.com",
   role: "1",

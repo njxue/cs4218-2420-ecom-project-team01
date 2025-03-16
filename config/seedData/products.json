@@ -1,0 +1,32 @@
+[
+  {
+    "name": "Textbook",
+    "slug": "textbook",
+    "description": "A comprehensive textbook",
+    "price": 79.99,
+    "category": "Book",
+    "quantity": 50,
+    "shipping": false,
+    "photo": "textbook.jpg"
+  },
+  {
+    "name": "Laptop",
+    "slug": "laptop",
+    "description": "A powerful laptop",
+    "price": 1499.99,
+    "category": "Electronics",
+    "quantity": 30,
+    "shipping": true,
+    "photo": "computer.jpg"
+  },
+  {
+    "name": "NUS T-shirt",
+    "slug": "nus-t-shirt",
+    "description": "A comfortable NUS T-shirt",
+    "price": 9.99,
+    "category": "Clothing",
+    "quantity": 20,
+    "shipping": false,
+    "photo": "nus-tshirt.jpg"
+  }
+]

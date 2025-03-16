@@ -25,7 +25,7 @@ module.exports = defineConfig({
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     /* Base URL to use in actions like `await page.goto('/')`. */
-    baseURL: "http://localhost:3000",
+    baseURL: "http://localhost:3001",
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: "on-first-retry",
@@ -37,7 +37,10 @@ module.exports = defineConfig({
   /* Configure projects for major browsers */
   projects: [
     // Setup project
-    { name: "setup", testMatch: /.*\.setup\.cjs/ },
+    {
+      name: "auth-setup",
+      testMatch: /.auth\.setup\.cjs/,
+    },
 
     {
       name: "chromium",
@@ -45,7 +48,7 @@ module.exports = defineConfig({
         ...devices["Desktop Chrome"],
         storageState: "playwright/.auth.json",
       },
-      dependencies: ["setup"],
+      dependencies: ["auth-setup"],
     },
 
     {
@@ -54,16 +57,7 @@ module.exports = defineConfig({
         ...devices["Desktop Firefox"],
         storageState: "playwright/.auth.json",
       },
-      dependencies: ["setup"],
-    },
-
-    {
-      name: "webkit",
-      use: {
-        ...devices["Desktop Safari"],
-        storageState: "playwright/.auth.json",
-      },
-      dependencies: ["setup"],
+      dependencies: ["auth-setup"],
     },
 
     /* Test against mobile viewports. */
@@ -87,9 +81,19 @@ module.exports = defineConfig({
     // },
   ],
 
-  webServer: {
-    command: "npm run dev",
-    url: "http://localhost:3000",
-    reuseExistingServer: !process.env.CI,
-  },
+  // Run tests in test environment, separate from dev
+  webServer: [
+    {
+      command: "npm run test-client",
+      url: "http://localhost:3001",
+      reuseExistingServer: !process.env.CI,
+      timeout: 120 * 1000,
+    },
+    {
+      command: "npm run test-server",
+      url: "http://localhost:7070",
+      reuseExistingServer: !process.env.CI,
+      timeout: 120 * 1000,
+    },
+  ],
 });

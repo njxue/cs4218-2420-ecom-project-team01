@@ -1,0 +1,20 @@
+[
+  {
+    "name": "cs4218 admin",
+    "email": "cs4218@test.com",
+    "password": "cs4218@test.com",
+    "role": "1",
+    "phone": "61234567",
+    "address": "1 Kent Ridge Ave",
+    "answer": "Answer"
+  },
+  {
+    "name": "john doe",
+    "email": "johndoe@test.com",
+    "password": "johndoe@test.com",
+    "role": "0",
+    "phone": "91234567",
+    "address": "2 Kent Ridge Ave",
+    "answer": "Answer"
+  }
+]

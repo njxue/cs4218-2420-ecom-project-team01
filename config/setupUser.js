@@ -25,18 +25,21 @@ export const createAdminUserIfNotExists = async () => {
     const collection = db.collection(USERS_COLLECTION);
 
     const existingUser = await collection.findOne({ email: adminUser.email });
+    const hashedPassword = await hashPassword(adminUser.password);
 
     if (existingUser) {
       console.log(
-        "Admin user 'cs4218@test.com' exists, deleting old user......"
+        "Admin user 'cs4218@test.com' exists, updating admin user......"
       );
-      await collection.deleteOne({ email: adminUser.email });
-      console.log("Deleted old admin user");
+    } else {
+      console.log("Creating admin user 'cs4218@test.com......");
     }
-
-    const hashedPassword = await hashPassword(adminUser.password);
-    await collection.insertOne({ ...adminUser, password: hashedPassword });
-    console.log("Created new admin user 'cs4218@test.com'");
+    await collection.updateOne(
+      { email: adminUser.email },
+      { $set: { ...adminUser, password: hashedPassword } },
+      { upsert: true }
+    );
+    console.log(`Admin user ${existingUser ? "updated" : "created"}`);
   } catch (err) {
     console.error("Error connecting to MongoDB:", err);
   } finally {

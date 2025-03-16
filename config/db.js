@@ -7,7 +7,9 @@ const connectDB = async () => {
     console.log(
       `Connected To Mongodb Database ${conn.connection.host}`.bgMagenta.white
     );
-    await createAdminUserIfNotExists();
+    if (process.env.DEV_MODE === "development") {
+      await createAdminUserIfNotExists();
+    }
   } catch (error) {
     console.log(`Error in Mongodb ${error}`.bgRed.white);
   }

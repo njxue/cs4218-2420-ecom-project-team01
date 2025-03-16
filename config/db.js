@@ -13,7 +13,7 @@ const connectDB = async () => {
       await connectToDevDB();
       break;
     case "test":
-      console.log("Switching to in-memory test database...");
+      console.log("Connecting to in-memory test database...");
       await connectToTestDB();
       break;
     default:

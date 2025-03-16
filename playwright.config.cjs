@@ -84,13 +84,13 @@ module.exports = defineConfig({
   // Run tests in test environment, separate from dev
   webServer: [
     {
-      command: "cross-env PORT=3001 REACT_APP_ENV=test npm run client",
+      command: "npm run test-client",
       url: "http://localhost:3001",
       reuseExistingServer: !process.env.CI,
       timeout: 120 * 1000,
     },
     {
-      command: "cross-env NODE_ENV=test PORT=7070  npm run server",
+      command: "npm run test-server",
       url: "http://localhost:7070",
       reuseExistingServer: !process.env.CI,
       timeout: 120 * 1000,

@@ -32,7 +32,11 @@ app.get("/", (req, res) => {
   res.send("<h1>Welcome to ecommerce app</h1>");
 });
 
-const PORT = process.env.PORT || 6060;
+const node_env = process.env.NODE_ENV;
+const PORT =
+  node_env === "development"
+    ? process.env.PORT ?? 6060
+    : process.env.TEST_PORT ?? 7070;
 
 app.listen(PORT, () => {
   console.log(

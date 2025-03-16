@@ -39,7 +39,7 @@ export const createAdminUserIfNotExists = async () => {
       { $set: { ...adminUser, password: hashedPassword } },
       { upsert: true }
     );
-    console.log(`Admin user ${existingUser ? "updated" : "created"}`);
+    console.log(`Admin user 'cs4218@test.com' ${existingUser ? "updated" : "created"}`);
   } catch (err) {
     console.error("Error connecting to MongoDB:", err);
   } finally {

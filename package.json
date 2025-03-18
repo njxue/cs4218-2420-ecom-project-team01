@@ -5,7 +5,7 @@
   "main": "server.js",
   "scripts": {
     "start": "babel-node server.js",
-    "server": "nodemon --exec babel-node server.js --ignore client",
+    "server": "nodemon",
     "test-server": "cross-env NODE_ENV=test npm run server",
     "client": "npm start --prefix ./client",
     "test-client": "cross-env PORT=3001 REACT_APP_ENV=test npm run client",

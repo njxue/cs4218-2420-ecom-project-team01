@@ -14,6 +14,7 @@ import jwt from "jsonwebtoken";
 import userModel from "../models/userModel.js";
 import path from "path";
 import productModel from "../models/productModel.js";
+import fs from "fs";
 
 let mongodb;
 let app;
@@ -37,6 +38,9 @@ afterEach(async () => {
   jest.restoreAllMocks();
 });
 
+const testPhotoPath = path.resolve("__tests__/assets/test-small.jpg");
+const testPhotoBuffer = fs.readFileSync(testPhotoPath);
+
 const getTestProduct = () => ({
   name: "Test product",
   description: "Test product description",
@@ -44,7 +48,10 @@ const getTestProduct = () => ({
   category: new mongoose.Types.ObjectId().toString(),
   quantity: 19,
   shipping: true,
-  photo: path.resolve("__tests__/assets/test-small.jpg"),
+  photo: {
+    data: testPhotoBuffer,
+    contentType: "image/jpg",
+  },
   slug: "test-product",
 });
 
@@ -57,7 +64,10 @@ const getTestProducts = () => [
     category: new mongoose.Types.ObjectId().toString(),
     quantity: 119,
     shipping: false,
-    photo: path.resolve("__tests__/assets/test-small.jpg"),
+    photo: {
+      data: testPhotoBuffer,
+      contentType: "image/jpeg",
+    },
     slug: "another-test-product",
   },
 ];
@@ -117,7 +127,7 @@ describe("Protected Endpoints Tests", () => {
         .field("category", testProduct.category)
         .field("quantity", testProduct.quantity)
         .field("shipping", testProduct.shipping)
-        .attach("photo", testProduct.photo);
+        .attach("photo", testPhotoPath);
 
       const product = await productModel.findOne({ name: testProduct.name });
 
@@ -149,7 +159,7 @@ describe("Protected Endpoints Tests", () => {
         .field("category", testProduct.category)
         .field("quantity", testProduct.quantity)
         .field("shipping", testProduct.shipping)
-        .attach("photo", testProduct.photo);
+        .attach("photo", testPhotoPath);
 
       expect(response.status).toBe(500);
     });
@@ -322,6 +332,52 @@ describe("Public Endpoints Tests", () => {
       jest.spyOn(console, "log").mockImplementationOnce(jest.fn());
 
       const response = await request(app).get(ENDPOINT_GET_PRODUCTS);
+
+      expect(response.status).toBe(500);
+    });
+  });
+
+  describe("Product Photo Controller Test", () => {
+    let existingProduct;
+    const ENDPOINT_PRODUCT_PHOTO = "/api/v1/product/product-photo";
+
+    beforeAll(async () => {
+      existingProduct = await createAndSaveTestProduct();
+    });
+
+    afterAll(async () => {
+      await restoreProductsCollection();
+    });
+
+    test("should fetch product photo and return it as buffer", async () => {
+      const response = await request(app).get(
+        `${ENDPOINT_PRODUCT_PHOTO}/${existingProduct.id}`
+      );
+
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual(testPhotoBuffer);
+      expect(response.headers["content-type"]).toBe("image/jpg");
+    });
+
+    test("should return 404 error when product is not found", async () => {
+      const nonExistentId = new mongoose.Types.ObjectId().toString();
+      const response = await request(app).get(
+        `${ENDPOINT_PRODUCT_PHOTO}/${nonExistentId}`
+      );
+
+      expect(response.status).toBe(404);
+      expect(response.body.message).toBe("Product not found");
+    });
+
+    test("should return error when there is database error", async () => {
+      jest.spyOn(productModel, "findById").mockImplementation(() => {
+        throw new Error("Database error");
+      });
+      jest.spyOn(console, "log").mockImplementationOnce(jest.fn());
+
+      const response = await request(app).get(
+        `${ENDPOINT_PRODUCT_PHOTO}/${existingProduct.id}`
+      );
 
       expect(response.status).toBe(500);
     });

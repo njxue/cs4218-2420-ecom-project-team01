@@ -27,6 +27,8 @@ module.exports = {
     "<rootDir>/client/src/context/**/*.test.js",
   ],
 
+  testPathIgnorePatterns: ["/.*\\.integration\\.test\\.js$"],
+
   // jest code coverage
   collectCoverage: true,
   collectCoverageFrom: [
@@ -34,6 +36,7 @@ module.exports = {
     "client/src/components/**",
     "client/src/hooks/**",
     "client/src/context/**",
+    "!**/*.integration.test.js",
   ],
   coverageDirectory: "coverage/frontend",
   coverageThreshold: {

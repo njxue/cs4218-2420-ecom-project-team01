@@ -22,6 +22,7 @@ module.exports = {
     "helpers/**",
     "middlewares/**",
     "models/**",
+    "!**/*.integration.test.js",
   ],
   coverageDirectory: "coverage/backend",
   coverageThreshold: {

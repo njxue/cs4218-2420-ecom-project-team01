@@ -10,7 +10,7 @@ const getUploadPhotoField = (page) => page.getByText("Upload Photo");
 const getCategoryField = (page) => page.locator("#rc_select_0");
 const getShippingField = (page) => page.locator("#rc_select_1");
 
-test.describe.skip("Create, update and delete product", () => {
+test.describe.serial("Create, update and delete product", () => {
   const uniqueId =
     (Date.now() % 1e8).toString(36) +
     Math.random().toString(36).substring(2, 4);

@@ -712,6 +712,19 @@ describe("Product Filters Controller Test", () => {
     });
   });
 
+  test("returns all products when any price is selected and no category filters are not provided", async () => {
+    req.body.checked = undefined;
+    req.body.radio = [0, null];
+
+    await productFiltersController(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.send).toHaveBeenCalledWith({
+      success: true,
+      products: mockProducts,
+    });
+  });
+
   test("returns empty list of products when no products are found", async () => {
     productModel.find.mockReturnValue([]);
 

@@ -38,7 +38,7 @@ afterEach(async () => {
   jest.restoreAllMocks();
 });
 
-const testPhotoPath = path.resolve("__tests__/assets/test-small.jpg");
+const testPhotoPath = path.resolve("test-assets/test-small.jpg");
 const testPhotoBuffer = fs.readFileSync(testPhotoPath);
 
 const getTestProduct = () => ({

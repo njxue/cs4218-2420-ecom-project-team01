@@ -564,8 +564,10 @@ describe("Public Endpoints Tests", () => {
     });
 
     afterAll(async () => {
-      await restoreProductsCollection();
-      mongoose.connection.collections.categories.deleteMany();
+      await Promise.all([
+        restoreProductsCollection(),
+        mongoose.connection.collections.categories.deleteMany(),
+      ]);
     });
 
     test("should fetch products and corresponding category with provided category slug", async () => {

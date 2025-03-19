@@ -240,6 +240,7 @@ export const productFiltersController = async (req, res) => {
     if (checked?.length) args.category = checked;
     if (radio?.length) args.price = { $gte: radio[0], $lte: radio[1] };
     const products = await productModel.find(args);
+
     res.status(200).send({
       success: true,
       products,
@@ -289,7 +290,7 @@ export const productListController = async (req, res) => {
     });
   } catch (error) {
     console.log(error);
-    res.status(400).send({
+    res.status(500).send({
       success: false,
       message: "error in per page ctrl",
       error,

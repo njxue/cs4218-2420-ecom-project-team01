@@ -629,4 +629,86 @@ describe("Public Endpoints Tests", () => {
       expect(response.status).toBe(500);
     });
   });
+
+  describe("Related Product Controller Test", () => {
+    let existingProducts, cid;
+    const ENDPOINT_RELATED_PRODUCTS = "/api/v1/product/related-product";
+
+    beforeAll(async () => {
+      cid = new mongoose.Types.ObjectId().toString();
+      const testProducts = getTestProducts().map((p) => ({
+        ...p,
+        category: cid,
+      }));
+      existingProducts = await productModel.insertMany(testProducts);
+    });
+
+    afterAll(async () => {
+      await restoreProductsCollection();
+    });
+
+    test("should fetch related products", async () => {
+      const sourceProductId = existingProducts[0].id;
+      const expectedProductId = existingProducts[1].id;
+
+      const response = await request(app).get(
+        `${ENDPOINT_RELATED_PRODUCTS}/${sourceProductId}/${cid}`
+      );
+
+      expect(response.status).toBe(200);
+      expect(response.body.products.length).toBe(1);
+      expect(response.body.products[0]._id).toBe(expectedProductId);
+    });
+
+    test("should return error when there is database error", async () => {
+      jest.spyOn(productModel, "find").mockImplementation(() => {
+        throw new Error("Database error");
+      });
+      jest.spyOn(console, "log").mockImplementationOnce(jest.fn());
+
+      const response = await request(app).get(
+        `${ENDPOINT_RELATED_PRODUCTS}/${existingProducts[0].id}/${cid}`
+      );
+
+      expect(response.status).toBe(500);
+    });
+  });
+
+  describe("Product List Controller Test", () => {
+    let existingProducts;
+    const ENDPOINT_PRODUCT_LIST = "/api/v1/product/product-list";
+
+    beforeAll(async () => {
+      existingProducts = await productModel.insertMany(getTestProducts());
+    });
+
+    afterAll(async () => {
+      await restoreProductsCollection();
+    });
+
+    test("should fetch products on first page", async () => {
+      const response = await request(app).get(`${ENDPOINT_PRODUCT_LIST}/1`);
+
+      expect(response.status).toBe(200);
+      expect(response.body.products.length).toBe(2);
+    });
+
+    test("should return empty list of products when page number exceeds number of available products", async () => {
+      const response = await request(app).get(`${ENDPOINT_PRODUCT_LIST}/2`);
+
+      expect(response.status).toBe(200);
+      expect(response.body.products.length).toBe(0);
+    });
+
+    test("should return error when there is database error", async () => {
+      jest.spyOn(productModel, "find").mockImplementation(() => {
+        throw new Error("Database error");
+      });
+      jest.spyOn(console, "log").mockImplementationOnce(jest.fn());
+
+      const response = await request(app).get(`${ENDPOINT_PRODUCT_LIST}/1`);
+
+      expect(response.status).toBe(500);
+    });
+  });
 });

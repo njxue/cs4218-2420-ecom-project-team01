@@ -504,4 +504,63 @@ describe("Public Endpoints Tests", () => {
       expect(response.status).toBe(500);
     });
   });
+
+  describe("Search Product Controller Test", () => {
+    let existingProducts;
+    const ENDPOINT_PRODUCT_SEARCH = "/api/v1/product/search";
+
+    beforeAll(async () => {
+      existingProducts = await Promise.all([
+        productModel.create(getTestProducts()[0]),
+        productModel.create(getTestProducts()[1]),
+      ]);
+    });
+
+    afterAll(async () => {
+      await restoreProductsCollection();
+    });
+
+    test("should fetch products containing search term in product name", async () => {
+      const expectedProduct = existingProducts[1];
+
+      const response = await request(app).get(
+        `${ENDPOINT_PRODUCT_SEARCH}/another`
+      );
+
+      expect(response.status).toBe(200);
+      expect(response.body.length).toBe(1);
+      expect(response.body[0]._id).toBe(expectedProduct.id);
+    });
+
+    test("should fetch products containing search term in product description", async () => {
+      const response = await request(app).get(
+        `${ENDPOINT_PRODUCT_SEARCH}/description`
+      );
+
+      expect(response.status).toBe(200);
+      expect(response.body.length).toBe(2);
+    });
+
+    test("should return empty products list when no product match seatch term", async () => {
+      const response = await request(app).get(
+        `${ENDPOINT_PRODUCT_SEARCH}/someKeywordThatDoesntMatch`
+      );
+
+      expect(response.status).toBe(200);
+      expect(response.body.length).toBe(0);
+    });
+
+    test("should return error when there is database error", async () => {
+      jest.spyOn(productModel, "find").mockImplementation(() => {
+        throw new Error("Database error");
+      });
+      jest.spyOn(console, "log").mockImplementationOnce(jest.fn());
+
+      const response = await request(app).get(
+        `${ENDPOINT_PRODUCT_SEARCH}/test`
+      );
+
+      expect(response.status).toBe(500);
+    });
+  });
 });

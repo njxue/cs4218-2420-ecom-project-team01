@@ -72,9 +72,11 @@ const getTestProducts = () => [
 ];
 
 // Creates a test product and save it in the (test) database
-const createAndSaveTestProduct = async () => {
-  return await productModel.create(getTestProduct());
-};
+const createAndSaveTestProduct = () => productModel.create(getTestProduct());
+
+// Creates 2 test products and save them in the (test) database
+const createAndSaveTestProducts = () =>
+  productModel.insertMany(getTestProducts());
 
 // Erase entire products collection after each test
 const restoreProductsCollection = async () => {
@@ -108,9 +110,7 @@ describe("Protected Endpoints Tests", () => {
     );
   });
 
-  afterEach(async () => {
-    await restoreProductsCollection();
-  });
+  afterEach(restoreProductsCollection);
 
   describe("Create Product Controller Test", () => {
     const ENDPOINT_CREATE_PRODUCT = "/api/v1/product/create-product";
@@ -263,9 +263,7 @@ describe("Public Endpoints Tests", () => {
       existingProduct = await createAndSaveTestProduct();
     });
 
-    afterAll(async () => {
-      await restoreProductsCollection();
-    });
+    afterAll(restoreProductsCollection);
 
     test("should fetch product", async () => {
       const response = await request(app).get(
@@ -299,28 +297,23 @@ describe("Public Endpoints Tests", () => {
   });
 
   describe("Get Products Controller Test", () => {
-    let testProducts;
+    let existingProducts;
     const ENDPOINT_GET_PRODUCTS = "/api/v1/product/get-product";
 
     beforeAll(async () => {
-      testProducts = await Promise.all([
-        productModel.create(getTestProducts()[0]),
-        productModel.create(getTestProducts()[1]),
-      ]);
+      existingProducts = await createAndSaveTestProducts();
     });
 
-    afterAll(async () => {
-      await restoreProductsCollection();
-    });
+    afterAll(restoreProductsCollection);
 
     test("should fetch products", async () => {
       const response = await request(app).get(ENDPOINT_GET_PRODUCTS);
 
       const receivedIds = response.body.products.map((p) => p._id);
-      const expectedIds = testProducts.map((p) => p.id);
+      const expectedIds = existingProducts.map((p) => p.id);
 
       expect(response.status).toBe(200);
-      expect(response.body.products.length).toBe(testProducts.length);
+      expect(response.body.products.length).toBe(existingProducts.length);
       expect(receivedIds).toEqual(expect.arrayContaining(expectedIds));
     });
 
@@ -344,9 +337,7 @@ describe("Public Endpoints Tests", () => {
       existingProduct = await createAndSaveTestProduct();
     });
 
-    afterAll(async () => {
-      await restoreProductsCollection();
-    });
+    afterAll(restoreProductsCollection);
 
     test("should fetch product photo and return it as buffer", async () => {
       const response = await request(app).get(
@@ -387,15 +378,10 @@ describe("Public Endpoints Tests", () => {
     const ENDPOINT_PRODUCT_FILTERS = "/api/v1/product/product-filters";
 
     beforeAll(async () => {
-      existingProducts = await Promise.all([
-        productModel.create(getTestProducts()[0]),
-        productModel.create(getTestProducts()[1]),
-      ]);
+      existingProducts = await createAndSaveTestProducts();
     });
 
-    afterAll(async () => {
-      await restoreProductsCollection();
-    });
+    afterAll(restoreProductsCollection);
 
     test("should fetch all products when no filters are provided", async () => {
       const response = await request(app).post(ENDPOINT_PRODUCT_FILTERS);
@@ -477,15 +463,10 @@ describe("Public Endpoints Tests", () => {
     const ENDPOINT_PRODUCT_COUNT = "/api/v1/product/product-count";
 
     beforeAll(async () => {
-      existingProducts = await Promise.all([
-        productModel.create(getTestProducts()[0]),
-        productModel.create(getTestProducts()[1]),
-      ]);
+      existingProducts = await createAndSaveTestProducts();
     });
 
-    afterAll(async () => {
-      await restoreProductsCollection();
-    });
+    afterAll(restoreProductsCollection);
 
     test("should fetch product count", async () => {
       const response = await request(app).get(ENDPOINT_PRODUCT_COUNT);
@@ -511,15 +492,10 @@ describe("Public Endpoints Tests", () => {
     const ENDPOINT_PRODUCT_SEARCH = "/api/v1/product/search";
 
     beforeAll(async () => {
-      existingProducts = await Promise.all([
-        productModel.create(getTestProducts()[0]),
-        productModel.create(getTestProducts()[1]),
-      ]);
+      existingProducts = await createAndSaveTestProducts();
     });
 
-    afterAll(async () => {
-      await restoreProductsCollection();
-    });
+    afterAll(restoreProductsCollection);
 
     test("should fetch products containing search term in product name", async () => {
       const expectedProduct = existingProducts[1];
@@ -643,9 +619,7 @@ describe("Public Endpoints Tests", () => {
       existingProducts = await productModel.insertMany(testProducts);
     });
 
-    afterAll(async () => {
-      await restoreProductsCollection();
-    });
+    afterAll(restoreProductsCollection);
 
     test("should fetch related products", async () => {
       const sourceProductId = existingProducts[0].id;
@@ -682,9 +656,7 @@ describe("Public Endpoints Tests", () => {
       existingProducts = await productModel.insertMany(getTestProducts());
     });
 
-    afterAll(async () => {
-      await restoreProductsCollection();
-    });
+    afterAll(restoreProductsCollection);
 
     test("should fetch products on first page", async () => {
       const response = await request(app).get(`${ENDPOINT_PRODUCT_LIST}/1`);

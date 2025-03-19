@@ -470,4 +470,38 @@ describe("Public Endpoints Tests", () => {
       expect(response.status).toBe(500);
     });
   });
+
+  describe("Product Count Controller Test", () => {
+    let existingProducts;
+    const ENDPOINT_PRODUCT_COUNT = "/api/v1/product/product-count";
+
+    beforeAll(async () => {
+      existingProducts = await Promise.all([
+        productModel.create(getTestProducts()[0]),
+        productModel.create(getTestProducts()[1]),
+      ]);
+    });
+
+    afterAll(async () => {
+      await restoreProductsCollection();
+    });
+
+    test("should fetch product count", async () => {
+      const response = await request(app).get(ENDPOINT_PRODUCT_COUNT);
+
+      expect(response.status).toBe(200);
+      expect(response.body.total).toBe(existingProducts.length);
+    });
+
+    test("should return error when there is database error", async () => {
+      jest.spyOn(productModel, "find").mockImplementation(() => {
+        throw new Error("Database error");
+      });
+      jest.spyOn(console, "log").mockImplementationOnce(jest.fn());
+
+      const response = await request(app).get(ENDPOINT_PRODUCT_COUNT);
+
+      expect(response.status).toBe(500);
+    });
+  });
 });

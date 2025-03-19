@@ -15,6 +15,7 @@ import userModel from "../models/userModel.js";
 import path from "path";
 import productModel from "../models/productModel.js";
 import fs from "fs";
+import categoryModel from "../models/categoryModel.js";
 
 let mongodb;
 let app;
@@ -558,6 +559,71 @@ describe("Public Endpoints Tests", () => {
 
       const response = await request(app).get(
         `${ENDPOINT_PRODUCT_SEARCH}/test`
+      );
+
+      expect(response.status).toBe(500);
+    });
+  });
+
+  describe("Product Category Controller Test", () => {
+    let existingProducts, testCategory_1, testCategory_2;
+    const ENDPOINT_PRODUCT_CATEGORY = "/api/v1/product/product-category";
+
+    beforeAll(async () => {
+      testCategory_1 = await categoryModel.create({
+        name: "test category",
+        slug: "test-category",
+      });
+
+      testCategory_2 = await categoryModel.create({
+        name: "another test category",
+        slug: "another-test-category",
+      });
+
+      const testProducts = getTestProducts();
+      testProducts[0].category = testCategory_1.id;
+      testProducts[1].category = testCategory_2.id;
+
+      existingProducts = await productModel.insertMany(testProducts);
+    });
+
+    afterAll(async () => {
+      await restoreProductsCollection();
+      mongoose.connection.collections.categories.deleteMany();
+    });
+
+    test("should fetch products and corresponding category with provided category slug", async () => {
+      const expectedProduct = existingProducts[0];
+      const expectedCategory = testCategory_1;
+
+      const response = await request(app).get(
+        `${ENDPOINT_PRODUCT_CATEGORY}/${expectedCategory.slug}`
+      );
+
+      expect(response.status).toBe(200);
+      expect(response.body.products.length).toBe(1);
+      expect(response.body.products[0]._id).toBe(expectedProduct.id);
+      expect(response.body.category._id).toBe(expectedCategory.id);
+    });
+
+    test("should return empty products list when no category does not exists", async () => {
+      const response = await request(app).get(
+        `${ENDPOINT_PRODUCT_CATEGORY}/non-existent-category`
+      );
+
+      expect(response.status).toBe(200);
+      expect(response.body.products.length).toBe(0);
+      expect(response.body.category).toBeNull();
+    });
+
+    test("should return error when there is database error", async () => {
+      jest.spyOn(productModel, "find").mockImplementation(() => {
+        throw new Error("Database error");
+      });
+      jest.spyOn(console, "log").mockImplementationOnce(jest.fn());
+
+      const response = await request(app).get(
+        `${ENDPOINT_PRODUCT_CATEGORY}/${testCategory_1.slug}`
       );
 
       expect(response.status).toBe(500);

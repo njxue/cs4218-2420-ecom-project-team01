@@ -1,6 +1,6 @@
 module.exports = {
   // name displayed during tests
-  displayName: "frontend",
+  displayName: "frontend unit tests",
 
   // simulates browser environment in jest
   // e.g., using document.querySelector in your tests
@@ -20,12 +20,7 @@ module.exports = {
   transformIgnorePatterns: ["/node_modules/(?!(styleMock\\.js)$)"],
 
   // only run these tests
-  testMatch: [
-    "<rootDir>/client/src/pages/**/*.test.js",
-    "<rootDir>/client/src/components/**/*.test.js",
-    "<rootDir>/client/src/hooks/**/*.test.js",
-    "<rootDir>/client/src/context/**/*.test.js",
-  ],
+  testMatch: ["<rootDir>/client/src/**/*.test.js"],
 
   testPathIgnorePatterns: ["/.*\\.integration\\.test\\.js$"],
 
@@ -36,8 +31,8 @@ module.exports = {
     "client/src/components/**",
     "client/src/hooks/**",
     "client/src/context/**",
-    "!**/*.integration.test.js",
   ],
+  coveragePathIgnorePatterns: ["/.*\\.test\\.js$"],
   coverageDirectory: "coverage/frontend",
   coverageThreshold: {
     global: {

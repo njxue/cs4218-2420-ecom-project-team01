@@ -40,18 +40,19 @@ afterEach(async () => {
 
 const testPhotoPath = path.resolve("test-assets/test-small.jpg");
 const testPhotoBuffer = fs.readFileSync(testPhotoPath);
+const testPhoto = {
+  data: testPhotoBuffer,
+  contentType: "image/jpg",
+};
 
 const getTestProduct = () => ({
   name: "Test product",
   description: "Test product description",
-  price: 99,
+  price: 79,
   category: new mongoose.Types.ObjectId().toString(),
   quantity: 19,
   shipping: true,
-  photo: {
-    data: testPhotoBuffer,
-    contentType: "image/jpg",
-  },
+  photo: testPhoto,
   slug: "test-product",
 });
 
@@ -60,14 +61,11 @@ const getTestProducts = () => [
   {
     name: "Another test product",
     description: "Another test product description",
-    price: 199,
+    price: 99,
     category: new mongoose.Types.ObjectId().toString(),
     quantity: 119,
     shipping: false,
-    photo: {
-      data: testPhotoBuffer,
-      contentType: "image/jpeg",
-    },
+    photo: testPhoto,
     slug: "another-test-product",
   },
 ];
@@ -378,6 +376,96 @@ describe("Public Endpoints Tests", () => {
       const response = await request(app).get(
         `${ENDPOINT_PRODUCT_PHOTO}/${existingProduct.id}`
       );
+
+      expect(response.status).toBe(500);
+    });
+  });
+
+  describe("Product Filters Controller Test", () => {
+    let existingProducts;
+    const ENDPOINT_PRODUCT_FILTERS = "/api/v1/product/product-filters";
+
+    beforeAll(async () => {
+      existingProducts = await Promise.all([
+        productModel.create(getTestProducts()[0]),
+        productModel.create(getTestProducts()[1]),
+      ]);
+    });
+
+    afterAll(async () => {
+      await restoreProductsCollection();
+    });
+
+    test("should fetch all products when no filters are provided", async () => {
+      const response = await request(app).post(ENDPOINT_PRODUCT_FILTERS);
+
+      const receivedIds = response.body.products.map((p) => p._id);
+      const expectedIds = existingProducts.map((p) => p.id);
+
+      expect(response.status).toBe(200);
+      expect(response.body.products.length).toBe(existingProducts.length);
+      expect(receivedIds).toEqual(expect.arrayContaining(expectedIds));
+    });
+
+    test("should filter by checked categories", async () => {
+      const expectedProduct = existingProducts[0];
+      const checkedCategory = expectedProduct.category.toString();
+
+      const response = await request(app)
+        .post(ENDPOINT_PRODUCT_FILTERS)
+        .send({ checked: [checkedCategory] });
+
+      expect(response.status).toBe(200);
+      expect(response.body.products.length).toBe(1);
+      expect(response.body.products[0]._id).toBe(expectedProduct.id);
+    });
+
+    test("should filter by price range", async () => {
+      const expectedProduct = existingProducts[0];
+      const checkedPrice = [60, 79];
+
+      const response = await request(app)
+        .post(ENDPOINT_PRODUCT_FILTERS)
+        .send({ radio: checkedPrice });
+
+      expect(response.status).toBe(200);
+      expect(response.body.products.length).toBe(1);
+      expect(response.body.products[0]._id).toBe(expectedProduct.id);
+    });
+
+    test("should filter by both category and price range", async () => {
+      const expectedProduct = existingProducts[1];
+      const checkedCategory = expectedProduct.category.toString();
+      const checkedPrice = [80, 99];
+
+      const response = await request(app)
+        .post(ENDPOINT_PRODUCT_FILTERS)
+        .send({ checked: [checkedCategory], radio: checkedPrice });
+
+      expect(response.status).toBe(200);
+      expect(response.body.products.length).toBe(1);
+      expect(response.body.products[0]._id).toBe(expectedProduct.id);
+    });
+
+    test("should return empty products list when no products satisfy filters", async () => {
+      const checkedCategory = existingProducts[0].category.toString();
+      const checkedPrice = [80, 99];
+
+      const response = await request(app)
+        .post(ENDPOINT_PRODUCT_FILTERS)
+        .send({ checked: [checkedCategory], radio: checkedPrice });
+
+      expect(response.status).toBe(200);
+      expect(response.body.products.length).toBe(0);
+    });
+
+    test("should return error when there is database error", async () => {
+      jest.spyOn(productModel, "find").mockImplementation(() => {
+        throw new Error("Database error");
+      });
+      jest.spyOn(console, "log").mockImplementationOnce(jest.fn());
+
+      const response = await request(app).post(ENDPOINT_PRODUCT_FILTERS);
 
       expect(response.status).toBe(500);
     });

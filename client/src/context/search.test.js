@@ -6,18 +6,14 @@ import { describe } from "node:test";
 
 describe("Search Context", () => {
   test("default search keyword and results should be empty", () => {
-    const { result } = renderHook(() => useSearch(), {
-      wrapper: ({ children }) => <SearchProvider>{children}</SearchProvider>,
-    });
+    const { result } = renderHook(() => useSearch());
 
     expect(result.current[0]).toEqual({ keyword: "", results: [] });
   });
 
   test("should update keyword correctly", () => {
     const testKeyword = "test keyword";
-    const { result } = renderHook(() => useSearch(), {
-      wrapper: ({ children }) => <SearchProvider>{children}</SearchProvider>,
-    });
+    const { result } = renderHook(() => useSearch());
 
     act(() => {
       result.current[1]({ keyword: testKeyword, results: [] });
@@ -28,9 +24,7 @@ describe("Search Context", () => {
 
   test("should update results correctly", () => {
     const testResults = ["product 1", "product 2"];
-    const { result } = renderHook(() => useSearch(), {
-      wrapper: ({ children }) => <SearchProvider>{children}</SearchProvider>,
-    });
+    const { result } = renderHook(() => useSearch());
 
     act(() => {
       result.current[1]({ keyword: "", results: testResults });

@@ -105,11 +105,11 @@ describe("Search Product Test", () => {
   test("should search product from home page", async () => {
     renderHomePage();
 
-    await act(async () => {
+    act(() => {
       userEvent.type(screen.getByPlaceholderText(/search/i), testKeyword);
       userEvent.click(screen.getByRole("button", { name: /search/i }));
     });
-    const productCard = screen.getByTestId(`product-${mockProduct._id}`);
+    const productCard = await screen.findByTestId(`product-${mockProduct._id}`);
 
     expect(
       screen.getByRole("heading", { name: /search results/i })
@@ -133,15 +133,13 @@ describe("Search Product Test", () => {
     });
     const cartLink = await screen.findByRole("link", { name: /cart/i });
 
-    await act(async () => {
+    act(() => {
       userEvent.click(addtoCartBtn);
       userEvent.click(cartLink);
     });
 
     // Should add item to cart
-    await waitFor(() => {
-      expect(screen.getByText(mockProduct.name)).toBeInTheDocument();
-    });
+    expect(await screen.findByText(mockProduct.name)).toBeInTheDocument();
   });
 
   test("clicking on 'More Details' should navigate user to product's product details page", async () => {
@@ -151,7 +149,7 @@ describe("Search Product Test", () => {
     const moreDetailsBtn = await within(productCard).findByRole("button", {
       name: /more details/i,
     });
-    await act(async () => {
+    act(() => {
       userEvent.click(moreDetailsBtn);
     });
 

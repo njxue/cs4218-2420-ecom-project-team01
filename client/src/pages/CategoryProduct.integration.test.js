@@ -92,7 +92,7 @@ describe("Product Categories Test", () => {
     const moreDetailsBtn = await within(productCard).findByRole("button", {
       name: /more details/i,
     });
-    await act(async () => {
+    act(() => {
       userEvent.click(moreDetailsBtn);
     });
 
@@ -114,14 +114,12 @@ describe("Product Categories Test", () => {
     });
     const cartLink = await screen.findByRole("link", { name: /cart/i });
 
-    await act(async () => {
+    act(() => {
       userEvent.click(addtoCartBtn);
       userEvent.click(cartLink);
     });
 
     // Should add item to cart
-    await waitFor(() => {
-      expect(screen.getByText(mockProduct.name)).toBeInTheDocument();
-    });
+    expect(await screen.findByText(mockProduct.name)).toBeInTheDocument();
   });
 });

@@ -88,14 +88,12 @@ describe("Products Test", () => {
     const productLink = await screen.findByTestId(
       `product-link-${mockProducts[0]._id}`
     );
-    await act(async () => {
+    act(() => {
       userEvent.click(productLink);
     });
 
-    await waitFor(() => {
-      expect(
-        screen.getByRole("button", { name: /update product/i })
-      ).toBeInTheDocument();
-    });
+    expect(
+      await screen.findByRole("button", { name: /update product/i })
+    ).toBeInTheDocument();
   });
 });

@@ -42,11 +42,11 @@ describe("Search Input Component", () => {
       </AuthProvider>
     );
 
-    await act(async () => {
+    act(() => {
       userEvent.type(screen.getByPlaceholderText(/search/i), testKeyword);
-      userEvent.click(screen.getByRole("button", { name: /search/i }));
     });
-
+    userEvent.click(screen.getByRole("button", { name: /search/i }));
+    
     // should navigate to /search
     await waitFor(() => {
       expect(

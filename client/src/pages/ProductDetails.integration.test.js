@@ -104,15 +104,13 @@ describe("Product Categories Test", () => {
 
     const addToCartBtn = screen.getByTestId("add-to-cart-main");
     const cartLink = screen.getByRole("link", { name: /cart/i });
-    await act(async () => {
+    act(() => {
       userEvent.click(addToCartBtn);
       userEvent.click(cartLink);
     });
 
     // Should add item to cart
-    await waitFor(() => {
-      expect(screen.getByText(mockProduct.name)).toBeInTheDocument();
-    });
+    expect(await screen.findByText(mockProduct.name)).toBeInTheDocument();
   });
 
   test("should add related product to cart", async () => {
@@ -129,15 +127,14 @@ describe("Product Categories Test", () => {
       `add-to-cart-${mockRelatedProduct._id}`
     );
     const cartLink = screen.getByRole("link", { name: /cart/i });
-
-    await act(async () => {
+    act(() => {
       userEvent.click(addToCartBtn);
       userEvent.click(cartLink);
     });
 
-    // Should add item to cart
-    await waitFor(() => {
-      expect(screen.getByText(mockProduct.name)).toBeInTheDocument();
-    });
+    // Should add related item to cart
+    expect(
+      await screen.findByText(mockRelatedProduct.name)
+    ).toBeInTheDocument();
   });
 });

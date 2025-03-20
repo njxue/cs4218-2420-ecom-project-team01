@@ -41,24 +41,19 @@ const renderPage = () => {
   );
 };
 
-describe("Product Categories Test", () => {
-  let mockProduct, mockCategories, mockRelatedProduct;
+describe("Product Details Page", () => {
+  let mockProduct, mockRelatedProduct;
 
   beforeEach(() => {
     jest.clearAllMocks();
 
-    mockCategories = [
-      { _id: "categoryId_1", name: "Book" },
-      { _id: "categoryId_2", name: "Food" },
-      { _id: "categoryId_3", name: "Electronics" },
-    ];
     mockProduct = {
       _id: "productId_1",
       name: "Nice book",
       description: "A nice book description",
       price: "$77.99",
       slug: testProductSlug,
-      category: mockCategories[0],
+      category: "book",
     };
     mockRelatedProduct = {
       _id: "productId_2",
@@ -66,7 +61,7 @@ describe("Product Categories Test", () => {
       description: "An expensive book description",
       price: "$799.99",
       slug: testRelatedProductSlug,
-      category: mockCategories[0],
+      category: "book",
     };
 
     axios.get.mockImplementation((url) => {
@@ -74,7 +69,7 @@ describe("Product Categories Test", () => {
         // For categories dropdown in header
         case "/api/v1/category/get-category":
           return Promise.resolve({
-            data: { success: true, category: mockCategories },
+            data: { success: true, category: [] },
           });
 
         case `/api/v1/product/get-product/${mockProduct.slug}`:

@@ -47,7 +47,7 @@ window.matchMedia =
     };
   };
 
-describe("Create Product Component", () => {
+describe("Create Product Page", () => {
   let mockCategories, inputValues, waitForEffect;
 
   const renderPage = () => {

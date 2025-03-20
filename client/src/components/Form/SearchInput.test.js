@@ -3,7 +3,7 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import "@testing-library/jest-dom";
 import SearchInput from "./SearchInput";
-import { SearchProvider, useSearch } from "../../context/search";
+import { useSearch } from "../../context/search";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 

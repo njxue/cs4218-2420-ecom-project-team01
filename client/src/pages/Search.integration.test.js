@@ -52,7 +52,7 @@ window.matchMedia =
     };
   };
 
-describe("Search Product Test", () => {
+describe("Search Product Page", () => {
   let mockProduct, testKeyword;
 
   beforeEach(() => {

@@ -22,7 +22,7 @@ jest.mock("../context/cart", () => ({
 jest.mock("./../components/Layout", () => ({ children }) => (
   <div>{children}</div>
 ));
-describe("Product Search Component", () => {
+describe("Product Search Page", () => {
   const mockProducts = [
     {
       _id: "productId_1",

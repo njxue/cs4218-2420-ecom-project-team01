@@ -49,7 +49,7 @@ window.matchMedia =
     };
   };
 
-describe("Update Product Component", () => {
+describe("Update Product Page", () => {
   let mockCategories, mockProduct, inputValues, waitForEffect;
 
   const renderPage = () => {

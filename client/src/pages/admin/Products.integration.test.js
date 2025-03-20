@@ -1,5 +1,5 @@
 import React from "react";
-import { render, screen, waitFor, act } from "@testing-library/react";
+import { render, screen, act } from "@testing-library/react";
 import axios from "axios";
 import "@testing-library/jest-dom/extend-expect";
 import Products from "./Products";
@@ -61,7 +61,7 @@ const renderPage = () => {
   );
 };
 
-describe("Products Test", () => {
+describe("Products Page", () => {
   const mockProducts = [
     {
       _id: "productId_1",

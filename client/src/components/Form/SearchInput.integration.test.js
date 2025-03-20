@@ -1,11 +1,5 @@
 import React from "react";
-import {
-  render,
-  screen,
-  fireEvent,
-  waitFor,
-  act,
-} from "@testing-library/react";
+import { render, screen, waitFor, act } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import "@testing-library/jest-dom";
 import SearchInput from "./SearchInput";
@@ -46,7 +40,7 @@ describe("Search Input Component", () => {
       userEvent.type(screen.getByPlaceholderText(/search/i), testKeyword);
     });
     userEvent.click(screen.getByRole("button", { name: /search/i }));
-    
+
     // should navigate to /search
     await waitFor(() => {
       expect(

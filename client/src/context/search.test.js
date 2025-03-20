@@ -1,7 +1,5 @@
-import { render, act, screen, renderHook } from "@testing-library/react";
-import axios from "axios";
-import React from "react";
-import { SearchProvider, useSearch } from "./search";
+import { act, renderHook } from "@testing-library/react";
+import { useSearch } from "./search";
 import { describe } from "node:test";
 
 describe("Search Context", () => {

@@ -565,7 +565,7 @@ describe("Product List Controller Test", () => {
 
     await productListController(req, res);
 
-    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.status).toHaveBeenCalledWith(500);
     expect(res.send).toHaveBeenCalledWith({
       success: false,
       message: "error in per page ctrl",

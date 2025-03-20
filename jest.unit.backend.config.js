@@ -1,16 +1,17 @@
 module.exports = {
   // display name
-  displayName: "backend",
+  displayName: "backend unit tests",
 
   // when testing backend
   testEnvironment: "node",
 
   // which test to run
-  testMatch: [
-    "<rootDir>/controllers/*.test.js",
-    "<rootDir>/helpers/*.test.js",
-    "<rootDir>/middlewares/*.test.js",
-    "<rootDir>/models/*.test.js",
+  testMatch: ["<rootDir>/**/*.test.js"],
+
+  // ignore client files and integration tests
+  testPathIgnorePatterns: [
+    "/.*\\.integration\\.test\\.js$",
+    "<rootDir>/client/",
   ],
 
   // jest code coverage
@@ -21,6 +22,7 @@ module.exports = {
     "middlewares/**",
     "models/**",
   ],
+  coveragePathIgnorePatterns: ["/.*\\.test\\.js$"],
   coverageDirectory: "coverage/backend",
   coverageThreshold: {
     global: {

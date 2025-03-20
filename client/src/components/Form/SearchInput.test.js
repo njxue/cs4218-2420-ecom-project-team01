@@ -6,7 +6,6 @@ import SearchInput from "./SearchInput";
 import { SearchProvider, useSearch } from "../../context/search";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import { before } from "node:test";
 
 jest.mock("axios");
 jest.mock("../../context/search", () => ({

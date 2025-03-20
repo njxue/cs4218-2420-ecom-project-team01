@@ -19,6 +19,10 @@ const HomePage = () => {
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
 
+  const anyPriceRange = Prices.find((price) => price.name === "Any")?.array; // Price range for the 'any' option. Should be [0, null]
+  const isAnyPriceSelected =
+    anyPriceRange[0] === radio?.[0] && anyPriceRange[1] === radio?.[1];
+
   //get all cat
   const getAllCategory = async () => {
     try {
@@ -86,11 +90,15 @@ const HomePage = () => {
     setChecked(all);
   };
   useEffect(() => {
-    if (!checked.length && !radio.length) getAllProducts();
+    if (!checked.length && (isAnyPriceSelected || !radio.length)) {
+      getAllProducts();
+    }
   }, [checked.length, radio.length]);
 
   useEffect(() => {
-    if (checked.length || radio.length) filterProduct();
+    if (checked.length || (radio.length && !isAnyPriceSelected)) {
+      filterProduct();
+    }
   }, [checked, radio]);
 
   //get filterd product

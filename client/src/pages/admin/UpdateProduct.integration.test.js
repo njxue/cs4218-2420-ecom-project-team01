@@ -19,6 +19,7 @@ const TEST_SLUG = "test-slug";
 
 // Need to mock, or else will have error
 jest.mock("antd", () => {
+  const originalAntd = jest.requireActual("antd");
   const MockSelect = ({
     placeholder,
     children,
@@ -35,10 +36,7 @@ jest.mock("antd", () => {
   MockSelect.Option = ({ value, children }) => (
     <option value={value}>{children}</option>
   );
-
-  // Badge is causing render error for some reason too
-  MockBadge = ({ children }) => <>{children}</>;
-  return { Select: MockSelect, Badge: MockBadge };
+  return { ...originalAntd, Select: MockSelect };
 });
 
 window.matchMedia =

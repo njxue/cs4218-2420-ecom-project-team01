@@ -53,5 +53,8 @@ describe("Search Input Component", () => {
         screen.getByRole("heading", { name: /search results/i })
       ).toBeInTheDocument();
     });
+    expect(axios.get).toHaveBeenCalledWith(
+      `/api/v1/product/search/${testKeyword}`
+    );
   });
 });

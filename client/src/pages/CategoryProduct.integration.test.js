@@ -12,28 +12,6 @@ import userEvent from "@testing-library/user-event";
 import CartPage from "./CartPage";
 
 jest.mock("axios");
-jest.mock("antd", () => {
-  const MockSelect = ({
-    placeholder,
-    children,
-    onChange,
-    "data-testid": dataTestId,
-  }) => (
-    <select
-      data-testid={dataTestId}
-      placeholder={placeholder}
-      onChange={(e) => onChange(e.target.value)}>
-      {children}
-    </select>
-  );
-  MockSelect.Option = ({ value, children }) => (
-    <option value={value}>{children}</option>
-  );
-
-  // Badge is causing render error for some reason too
-  MockBadge = ({ children }) => <>{children}</>;
-  return { Select: MockSelect, Badge: MockBadge };
-});
 
 window.matchMedia =
   window.matchMedia ||

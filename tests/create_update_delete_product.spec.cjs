@@ -37,7 +37,7 @@ test.describe.serial("Create, update and delete product", () => {
     await page.goto("/dashboard/admin/create-product");
 
     await getCategoryField(page).click();
-    await page.getByText(PRODUCT_DETAILS.category).click();
+    await page.getByTitle(PRODUCT_DETAILS.category).click();
 
     await getUploadPhotoField(page).click();
     await getUploadPhotoField(page).setInputFiles(
@@ -74,14 +74,14 @@ test.describe.serial("Create, update and delete product", () => {
 
     // ========================== /dashboard/admin/product/:slug ==========================
     // Should populate fields with correct product details
-    await expect(page.getByText(PRODUCT_DETAILS.category)).toBeVisible();
+    await expect(page.getByTitle(PRODUCT_DETAILS.category)).toBeVisible();
     await expect(getNameField(page)).toHaveValue(PRODUCT_DETAILS.name);
     await expect(getDescriptionField(page)).toHaveValue(
       PRODUCT_DETAILS.description
     );
     await expect(getPriceField(page)).toHaveValue(PRODUCT_DETAILS.price);
     await expect(getQuantityField(page)).toHaveValue(PRODUCT_DETAILS.quantity);
-    await expect(page.getByText(PRODUCT_DETAILS.category)).toBeVisible();
+    await expect(page.getByTitle(PRODUCT_DETAILS.category)).toBeVisible();
     await expect(page.getByText(PRODUCT_DETAILS.shipping)).toBeVisible();
 
     // ========================== / (public products page) ==========================
@@ -99,8 +99,8 @@ test.describe.serial("Create, update and delete product", () => {
     await expect(getNameField(page)).toHaveValue(PRODUCT_DETAILS.name);
 
     // Update fields
-    await page.getByText(PRODUCT_DETAILS.category).click();
-    await page.getByText(UPDATED_PRODUCT_DETAILS.category).click();
+    await page.getByTitle(PRODUCT_DETAILS.category).click();
+    await page.getByTitle(UPDATED_PRODUCT_DETAILS.category).click();
 
     await getUploadPhotoField(page).click();
     await getUploadPhotoField(page).setInputFiles(
@@ -143,7 +143,7 @@ test.describe.serial("Create, update and delete product", () => {
     // ========================== /dashboard/admin/product/:slug ==========================
     // Should populate fields with correct product details
     await expect(
-      page.getByText(UPDATED_PRODUCT_DETAILS.category)
+      page.getByTitle(UPDATED_PRODUCT_DETAILS.category)
     ).toBeVisible();
     await expect(getNameField(page)).toHaveValue(UPDATED_PRODUCT_DETAILS.name);
     await expect(getDescriptionField(page)).toHaveValue(

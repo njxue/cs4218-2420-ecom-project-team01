@@ -10,6 +10,16 @@
     "photo": "textbook.jpg"
   },
   {
+    "name": "Storybook",
+    "slug": "storybook",
+    "description": "A nice storybook",
+    "price": 19.99,
+    "category": "Book",
+    "quantity": 10,
+    "shipping": true,
+    "photo": "textbook.jpg"
+  },
+  {
     "name": "Laptop",
     "slug": "laptop",
     "description": "A powerful laptop",

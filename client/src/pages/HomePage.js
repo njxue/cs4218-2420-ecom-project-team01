@@ -14,10 +14,14 @@ const HomePage = () => {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [checked, setChecked] = useState([]);
-  const [radio, setRadio] = useState([]);
+  const [radio, setRadio] = useState(Prices[0].array);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
+
+  const anyPriceRange = Prices.find((price) => price.name === "Any")?.array; // Price range for the 'any' option. Should be [0, null]
+  const isAnyPriceSelected =
+    anyPriceRange[0] === radio?.[0] && anyPriceRange[1] === radio?.[1];
 
   //get all cat
   const getAllCategory = async () => {
@@ -86,11 +90,15 @@ const HomePage = () => {
     setChecked(all);
   };
   useEffect(() => {
-    if (!checked.length || !radio.length) getAllProducts();
+    if (!checked.length && (isAnyPriceSelected || !radio.length)) {
+      getAllProducts();
+    }
   }, [checked.length, radio.length]);
 
   useEffect(() => {
-    if (checked.length || radio.length) filterProduct();
+    if (checked.length || (radio.length && !isAnyPriceSelected)) {
+      filterProduct();
+    }
   }, [checked, radio]);
 
   //get filterd product
@@ -130,13 +138,15 @@ const HomePage = () => {
           {/* price filter */}
           <h4 className="text-center mt-4">Filter By Price</h4>
           <div className="d-flex flex-column">
-            <Radio.Group onChange={(e) => setRadio(e.target.value)}>
-              {Prices?.map((p) => (
-                <div key={p._id}>
-                  <Radio value={p.array}>{p.name}</Radio>
-                </div>
-              ))}
-            </Radio.Group>
+            <Radio.Group
+              style={{ display: "flex", flexDirection: "column" }}
+              onChange={(e) => setRadio(e.target.value)}
+              value={radio}
+              options={Prices.map((price) => ({
+                value: price.array,
+                label: price.name,
+              }))}
+            />
           </div>
           <div className="d-flex flex-column">
             <button

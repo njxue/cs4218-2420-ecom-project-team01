@@ -238,7 +238,12 @@ export const productFiltersController = async (req, res) => {
     const { checked, radio } = req.body;
     let args = {};
     if (checked?.length) args.category = checked;
-    if (radio?.length) args.price = { $gte: radio[0], $lte: radio[1] };
+    if (radio?.length) {
+      args.price = { $gte: radio[0] };
+      if (radio[1] != null) {
+        args.price.$lte = radio[1];
+      }
+    }
     const products = await productModel.find(args);
 
     res.status(200).send({
@@ -302,11 +307,12 @@ export const productListController = async (req, res) => {
 export const searchProductController = async (req, res) => {
   try {
     const { keyword } = req.params;
+    const trimmedKeyword = keyword.trim();
     const results = await productModel
       .find({
         $or: [
-          { name: { $regex: keyword, $options: "i" } },
-          { description: { $regex: keyword, $options: "i" } },
+          { name: { $regex: trimmedKeyword, $options: "i" } },
+          { description: { $regex: trimmedKeyword, $options: "i" } },
         ],
       })
       .select("-photo");

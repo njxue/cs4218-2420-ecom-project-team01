@@ -13,7 +13,6 @@ const getShippingOption = (page, option) =>
   page.getByTestId(`shipping-${option === "Yes" ? "yes" : "no"}`);
 
 test.describe.serial("Create, update and delete product", () => {
-  test.slow();
   const uniqueId =
     (Date.now() % 1e8).toString(36) +
     Math.random().toString(36).substring(2, 4);

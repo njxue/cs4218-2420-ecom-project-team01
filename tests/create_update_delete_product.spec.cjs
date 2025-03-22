@@ -36,11 +36,25 @@ test.describe.serial("Create, update and delete product", () => {
     shipping: "Yes",
     photo: "to-kill-a-mockingbird.jpg",
   };
+
+  const assertProductDetailsLoaded = async (page, expectedProduct) => {
+    await expect(page.getByTitle(expectedProduct.category)).toBeVisible();
+    await expect(getNameField(page)).toHaveValue(expectedProduct.name);
+    await expect(getDescriptionField(page)).toHaveValue(
+      expectedProduct.description
+    );
+    await expect(getPriceField(page)).toHaveValue(expectedProduct.price);
+    await expect(getQuantityField(page)).toHaveValue(expectedProduct.quantity);
+    await expect(page.getByTitle(expectedProduct.category)).toBeVisible();
+    await expect(page.getByText(expectedProduct.shipping)).toBeVisible();
+  };
+
   test("should create product successfully", async ({ page }) => {
     await page.goto("/dashboard/admin/create-product");
 
     await getCategoryField(page).click();
     await page.getByTitle(PRODUCT_DETAILS.category).click();
+    await expect(page.getByText(/select a category/i)).not.toBeVisible(); // Wait for state to update
 
     await getUploadPhotoField(page).click();
     await getUploadPhotoField(page).setInputFiles(
@@ -61,7 +75,7 @@ test.describe.serial("Create, update and delete product", () => {
 
     await getShippingField(page).click();
     await getShippingOption(page, PRODUCT_DETAILS.shipping).click();
-    await expect(page.getByText(/select shipping/i)).not.toBeVisible(); // Wait for shipping state to update
+    await expect(page.getByText(/select shipping/i)).not.toBeVisible(); // Wait for state update
 
     await page.getByRole("button", { name: "CREATE PRODUCT" }).click();
 
@@ -78,15 +92,7 @@ test.describe.serial("Create, update and delete product", () => {
 
     // ========================== /dashboard/admin/product/:slug ==========================
     // Should populate fields with correct product details
-    await expect(page.getByTitle(PRODUCT_DETAILS.category)).toBeVisible();
-    await expect(getNameField(page)).toHaveValue(PRODUCT_DETAILS.name);
-    await expect(getDescriptionField(page)).toHaveValue(
-      PRODUCT_DETAILS.description
-    );
-    await expect(getPriceField(page)).toHaveValue(PRODUCT_DETAILS.price);
-    await expect(getQuantityField(page)).toHaveValue(PRODUCT_DETAILS.quantity);
-    await expect(page.getByTitle(PRODUCT_DETAILS.category)).toBeVisible();
-    await expect(page.getByText(PRODUCT_DETAILS.shipping)).toBeVisible();
+    await assertProductDetailsLoaded(page, PRODUCT_DETAILS);
 
     // ========================== / (public products page) ==========================
     await page.goto("/");
@@ -100,7 +106,7 @@ test.describe.serial("Create, update and delete product", () => {
     await page.getByRole("heading", { name: PRODUCT_DETAILS.name }).click();
 
     // Wait for product details to load
-    await expect(getNameField(page)).toHaveValue(PRODUCT_DETAILS.name);
+    await assertProductDetailsLoaded(page, PRODUCT_DETAILS);
 
     // Update fields
     await getUploadPhotoField(page).click();
@@ -108,7 +114,7 @@ test.describe.serial("Create, update and delete product", () => {
       `tests/assets/${UPDATED_PRODUCT_DETAILS.photo}`
     );
 
-    await page.getByTitle(PRODUCT_DETAILS.category).click();
+    await getCategoryField(page).click();
     await page.getByTitle(UPDATED_PRODUCT_DETAILS.category).click();
 
     await getShippingField(page).click();
@@ -146,22 +152,7 @@ test.describe.serial("Create, update and delete product", () => {
 
     // ========================== /dashboard/admin/product/:slug ==========================
     // Should populate fields with correct product details
-    await expect(
-      page.getByTitle(UPDATED_PRODUCT_DETAILS.category)
-    ).toBeVisible();
-    await expect(getNameField(page)).toHaveValue(UPDATED_PRODUCT_DETAILS.name);
-    await expect(getDescriptionField(page)).toHaveValue(
-      UPDATED_PRODUCT_DETAILS.description
-    );
-    await expect(getPriceField(page)).toHaveValue(
-      UPDATED_PRODUCT_DETAILS.price
-    );
-    await expect(getQuantityField(page)).toHaveValue(
-      UPDATED_PRODUCT_DETAILS.quantity
-    );
-    await expect(
-      page.getByText(UPDATED_PRODUCT_DETAILS.shipping)
-    ).toBeVisible();
+    await assertProductDetailsLoaded(page, UPDATED_PRODUCT_DETAILS);
 
     // ========================== / (public products page) ==========================
     await page.goto("/");

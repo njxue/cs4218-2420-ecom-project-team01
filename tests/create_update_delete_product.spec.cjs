@@ -7,8 +7,10 @@ const getDescriptionField = (page) =>
 const getPriceField = (page) => page.getByPlaceholder("write a Price");
 const getQuantityField = (page) => page.getByPlaceholder("write a quantity");
 const getUploadPhotoField = (page) => page.getByText("Upload Photo");
-const getCategoryField = (page) => page.locator("#rc_select_0");
-const getShippingField = (page) => page.locator("#rc_select_1");
+const getCategoryField = (page) => page.getByTestId("select-category");
+const getShippingField = (page) => page.getByTestId("select-shipping");
+const getShippingOption = (page, option) =>
+  page.getByTestId(`shipping-${option === "Yes" ? "yes" : "no"}`);
 
 test.describe.serial("Create, update and delete product", () => {
   test.slow();
@@ -58,7 +60,8 @@ test.describe.serial("Create, update and delete product", () => {
     await getQuantityField(page).fill(PRODUCT_DETAILS.quantity);
 
     await getShippingField(page).click();
-    await page.getByText(PRODUCT_DETAILS.shipping).click();
+    await getShippingOption(page, PRODUCT_DETAILS.shipping).click();
+    await expect(page.getByText(/select shipping/i)).not.toBeVisible(); // Wait for shipping state to update
 
     await page.getByRole("button", { name: "CREATE PRODUCT" }).click();
 
@@ -100,13 +103,16 @@ test.describe.serial("Create, update and delete product", () => {
     await expect(getNameField(page)).toHaveValue(PRODUCT_DETAILS.name);
 
     // Update fields
-    await page.getByTitle(PRODUCT_DETAILS.category).click();
-    await page.getByTitle(UPDATED_PRODUCT_DETAILS.category).click();
-
     await getUploadPhotoField(page).click();
     await getUploadPhotoField(page).setInputFiles(
       `tests/assets/${UPDATED_PRODUCT_DETAILS.photo}`
     );
+
+    await page.getByTitle(PRODUCT_DETAILS.category).click();
+    await page.getByTitle(UPDATED_PRODUCT_DETAILS.category).click();
+
+    await getShippingField(page).click();
+    await getShippingOption(page, UPDATED_PRODUCT_DETAILS.shipping).click();
 
     await getNameField(page).click();
     await getNameField(page).fill(UPDATED_PRODUCT_DETAILS.name);
@@ -119,9 +125,6 @@ test.describe.serial("Create, update and delete product", () => {
 
     await getQuantityField(page).click();
     await getQuantityField(page).fill(UPDATED_PRODUCT_DETAILS.quantity);
-
-    await page.getByText(PRODUCT_DETAILS.shipping).click();
-    await page.getByText(UPDATED_PRODUCT_DETAILS.shipping).click();
 
     await page.getByRole("button", { name: "UPDATE PRODUCT" }).click();
 
